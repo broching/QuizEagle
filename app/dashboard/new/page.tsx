@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useAction } from "convex/react";
+import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { Youtube, FileText, Upload, ArrowRight, X, CheckCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Step = "idle" | "extracting" | "generating" | "saving" | "done" | "error";
+type Step = "idle" | "extracting" | "generating" | "saving" | "error";
 
 const STEPS: { key: Step; label: string }[] = [
   { key: "extracting", label: "Extracting content..." },
@@ -21,18 +21,13 @@ const STEPS: { key: Step; label: string }[] = [
 
 export default function NewDeckPage() {
   const router = useRouter();
-  const extractPdf = useAction(api.actions.generateDeck.extractPdfText);
-  const extractYoutube = useAction(api.actions.generateDeck.extractYoutubeTranscript);
-  const generateDeck = useAction(api.actions.generateDeck.generateDeck);
+  const createDeck = useMutation(api.mutations.decks.createDeck);
 
   const [step, setStep] = useState<Step>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [activeTab, setActiveTab] = useState("youtube");
 
-  // YouTube state
   const [youtubeUrl, setYoutubeUrl] = useState("");
-
-  // PDF state
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -54,59 +49,67 @@ export default function NewDeckPage() {
   }
 
   async function handleGenerate() {
+    setStep("extracting");
     try {
+      // ── Build request body ─────────────────────────────────────────────────
+      let body: Record<string, unknown>;
+
       if (activeTab === "youtube") {
         if (!isYoutubeUrl(youtubeUrl)) {
           toast.error("Please enter a valid YouTube URL.");
+          setStep("idle");
           return;
         }
-
-        setStep("extracting");
-        const { text } = await extractYoutube({ url: youtubeUrl });
-
-        setStep("generating");
-        const result = await generateDeck({
-          sourceType: "youtube",
-          text,
-          sourceUrl: youtubeUrl,
-        });
-
-        setStep("saving");
-        await new Promise((r) => setTimeout(r, 400));
-        toast.success("Deck created successfully!");
-        router.push(`/dashboard/decks/${result.deckId}`);
+        body = { sourceType: "youtube", youtubeUrl };
       } else {
         if (!pdfFile) {
           toast.error("Please select a PDF file.");
+          setStep("idle");
           return;
         }
         if (pdfFile.size > 20 * 1024 * 1024) {
           toast.error("PDF must be under 20 MB.");
+          setStep("idle");
           return;
         }
-
-        setStep("extracting");
         const arrayBuffer = await pdfFile.arrayBuffer();
-        const base64 = btoa(
+        const pdfBase64 = btoa(
           new Uint8Array(arrayBuffer).reduce((s, b) => s + String.fromCharCode(b), "")
         );
-        const { text } = await extractPdf({ pdfBase64: base64 });
-
-        setStep("generating");
-        const result = await generateDeck({
-          sourceType: "pdf",
-          text,
-          fileName: pdfFile.name,
-        });
-
-        setStep("saving");
-        await new Promise((r) => setTimeout(r, 400));
-        toast.success("Deck created successfully!");
-        router.push(`/dashboard/decks/${result.deckId}`);
+        body = { sourceType: "pdf", pdfBase64, fileName: pdfFile.name };
       }
+
+      // ── Call Next.js API route (extraction + Gemini) ──────────────────────
+      setStep("generating");
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? `Server error ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      // ── Save to Convex ─────────────────────────────────────────────────────
+      setStep("saving");
+      const deckId = await createDeck({
+        title: data.title,
+        summary: data.summary,
+        sourceType: data.sourceType,
+        sourceUrl: data.sourceUrl,
+        sourceFileName: data.sourceFileName,
+        flashcards: data.flashcards,
+        quizQuestions: data.quizQuestions,
+      });
+
+      toast.success("Deck created successfully!");
+      router.push(`/dashboard/decks/${deckId}`);
     } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "Something went wrong. Please try again.";
+      const msg = err instanceof Error ? err.message : "Something went wrong. Please try again.";
       setErrorMsg(msg);
       setStep("error");
       toast.error(msg);
@@ -115,9 +118,7 @@ export default function NewDeckPage() {
 
   const isLoading = step !== "idle" && step !== "error";
 
-  if (isLoading) {
-    return <LoadingState currentStep={step} />;
-  }
+  if (isLoading) return <LoadingState currentStep={step} />;
 
   if (step === "error") {
     return (
@@ -129,10 +130,7 @@ export default function NewDeckPage() {
           <h2 className="text-xl font-bold text-[#15172B]">Generation failed</h2>
           <p className="text-[#6A6F87] mt-2 text-sm leading-relaxed max-w-sm">{errorMsg}</p>
         </div>
-        <Button
-          onClick={() => setStep("idle")}
-          className="bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white"
-        >
+        <Button onClick={() => setStep("idle")} className="bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white">
           Try Again
         </Button>
       </div>
@@ -142,15 +140,11 @@ export default function NewDeckPage() {
   return (
     <div className="max-w-3xl mx-auto px-6 py-10">
       <div className="mb-8">
-        <p className="text-xs font-bold text-[#5C6BC0] uppercase tracking-widest mb-1">
-          Create New Deck
-        </p>
+        <p className="text-xs font-bold text-[#5C6BC0] uppercase tracking-widest mb-1">Create New Deck</p>
         <h1 className="text-3xl font-extrabold text-[#15172B] tracking-tight">
-          Generate flashcards & quiz
+          Generate flashcards &amp; quiz
         </h1>
-        <p className="text-[#6A6F87] mt-2">
-          Upload a PDF or paste a YouTube URL to get started.
-        </p>
+        <p className="text-[#6A6F87] mt-2">Upload a PDF or paste a YouTube URL to get started.</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -182,25 +176,22 @@ export default function NewDeckPage() {
                 <div className="text-sm text-[#6A6F87]">Lecture, documentary, or tutorial</div>
               </div>
             </div>
-
             <Input
               placeholder="https://youtube.com/watch?v=..."
               value={youtubeUrl}
               onChange={(e) => setYoutubeUrl(e.target.value)}
-              className="border-[#DCDEE7] focus:border-[#8691D3] focus:ring-[#5C6BC0]/10 h-12 text-sm rounded-xl"
+              className="border-[#DCDEE7] focus:border-[#8691D3] h-12 text-sm rounded-xl"
             />
             <div className="flex justify-between mt-2 text-xs text-[#8D92A8]">
               <span>Supports any public YouTube video with captions</span>
               <span>{youtubeUrl.length} / 200</span>
             </div>
-
             <Button
               onClick={handleGenerate}
               disabled={!isYoutubeUrl(youtubeUrl)}
               className="w-full mt-5 bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white h-12 text-base font-semibold rounded-xl gap-2 disabled:opacity-40"
             >
-              Generate Flashcards
-              <ArrowRight size={17} />
+              Generate Flashcards <ArrowRight size={17} />
             </Button>
           </div>
         </TabsContent>
@@ -224,10 +215,7 @@ export default function NewDeckPage() {
                   <div className="font-semibold text-sm text-[#15172B] truncate">{pdfFile.name}</div>
                   <div className="text-xs text-[#6A6F87]">{formatBytes(pdfFile.size)}</div>
                 </div>
-                <button
-                  onClick={() => setPdfFile(null)}
-                  className="text-[#8D92A8] hover:text-[#D9534F] transition-colors"
-                >
+                <button onClick={() => setPdfFile(null)} className="text-[#8D92A8] hover:text-[#D9534F]">
                   <X size={16} />
                 </button>
               </div>
@@ -239,17 +227,14 @@ export default function NewDeckPage() {
                 onClick={() => fileInputRef.current?.click()}
                 className={cn(
                   "border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all",
-                  dragging
-                    ? "border-[#5C6BC0] bg-[#EEF0FB]"
-                    : "border-[#C5CCEC] bg-gradient-to-b from-[#EEF0FB] to-[#F9FAFE] hover:border-[#8691D3]"
+                  dragging ? "border-[#5C6BC0] bg-[#EEF0FB]" : "border-[#C5CCEC] bg-gradient-to-b from-[#EEF0FB] to-[#F9FAFE] hover:border-[#8691D3]"
                 )}
               >
                 <div className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center mx-auto mb-3 text-[#5C6BC0]">
                   <Upload size={22} />
                 </div>
                 <div className="text-sm font-semibold text-[#15172B]">
-                  Drop a PDF here or{" "}
-                  <span className="text-[#5C6BC0]">browse files</span>
+                  Drop a PDF here or <span className="text-[#5C6BC0]">browse files</span>
                 </div>
                 <div className="text-xs text-[#8D92A8] mt-1">Max 20 MB · PDF only</div>
                 <input
@@ -257,10 +242,7 @@ export default function NewDeckPage() {
                   type="file"
                   accept=".pdf"
                   className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) setPdfFile(file);
-                  }}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) setPdfFile(f); }}
                 />
               </div>
             )}
@@ -270,8 +252,7 @@ export default function NewDeckPage() {
               disabled={!pdfFile}
               className="w-full mt-5 bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white h-12 text-base font-semibold rounded-xl gap-2 disabled:opacity-40"
             >
-              Upload & Generate
-              <ArrowRight size={17} />
+              Upload &amp; Generate <ArrowRight size={17} />
             </Button>
           </div>
         </TabsContent>
@@ -279,10 +260,7 @@ export default function NewDeckPage() {
 
       <div className="flex gap-2 justify-center mt-6 flex-wrap">
         {["Free to use", "AI-powered", "Results in ~30s"].map((pill) => (
-          <span
-            key={pill}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#DCDEE7] text-xs font-medium text-[#34384F]"
-          >
+          <span key={pill} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#DCDEE7] text-xs font-medium text-[#34384F]">
             <CheckCircle size={11} className="text-[#2BAA66]" />
             {pill}
           </span>
@@ -299,18 +277,13 @@ function LoadingState({ currentStep }: { currentStep: Step }) {
     <div className="max-w-xl mx-auto px-6 py-16 flex flex-col items-center gap-8">
       <div
         className="w-16 h-16 rounded-2xl flex items-center justify-center"
-        style={{
-          background: "linear-gradient(135deg, #5C6BC0, #404A93)",
-          boxShadow: "0 8px 24px rgba(92,107,192,.35)",
-        }}
+        style={{ background: "linear-gradient(135deg, #5C6BC0, #404A93)", boxShadow: "0 8px 24px rgba(92,107,192,.35)" }}
       >
         <Loader2 size={28} className="text-white animate-spin" />
       </div>
 
       <div className="text-center">
-        <p className="text-xs font-bold text-[#5C6BC0] uppercase tracking-widest mb-1">
-          Working on it
-        </p>
+        <p className="text-xs font-bold text-[#5C6BC0] uppercase tracking-widest mb-1">Working on it</p>
         <h2 className="text-2xl font-extrabold text-[#15172B] tracking-tight">
           Generating your study session…
         </h2>
@@ -322,46 +295,23 @@ function LoadingState({ currentStep }: { currentStep: Step }) {
           const isActive = i === stepIndex;
           return (
             <div key={s.key} className="flex items-center gap-4">
-              <div
-                className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-sm transition-all",
-                  isDone
-                    ? "bg-[#2BAA66] text-white"
-                    : isActive
-                    ? "bg-[#EEF0FB] border-2 border-[#5C6BC0] text-[#5C6BC0]"
-                    : "bg-[#ECEEF4] text-[#B6BAC9]"
-                )}
-              >
-                {isDone ? (
-                  <CheckCircle size={16} />
-                ) : isActive ? (
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#5C6BC0] animate-pulse" />
-                ) : (
-                  i + 1
-                )}
+              <div className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-sm transition-all",
+                isDone ? "bg-[#2BAA66] text-white" : isActive ? "bg-[#EEF0FB] border-2 border-[#5C6BC0] text-[#5C6BC0]" : "bg-[#ECEEF4] text-[#B6BAC9]"
+              )}>
+                {isDone ? <CheckCircle size={16} /> : isActive ? <div className="w-2.5 h-2.5 rounded-full bg-[#5C6BC0] animate-pulse" /> : i + 1}
               </div>
-              <span
-                className={cn(
-                  "text-base font-semibold",
-                  isDone
-                    ? "text-[#6A6F87] line-through"
-                    : isActive
-                    ? "text-[#15172B]"
-                    : "text-[#B6BAC9]"
-                )}
-              >
+              <span className={cn(
+                "text-base font-semibold",
+                isDone ? "text-[#6A6F87] line-through" : isActive ? "text-[#15172B]" : "text-[#B6BAC9]"
+              )}>
                 {s.label}
               </span>
               {isActive && (
                 <div className="flex gap-1 ml-auto">
                   {[0, 1, 2].map((d) => (
-                    <div
-                      key={d}
-                      className="w-1.5 h-1.5 rounded-full bg-[#5C6BC0]"
-                      style={{
-                        animation: `bounce 1.2s ease-in-out infinite ${d * 0.15}s`,
-                      }}
-                    />
+                    <div key={d} className="w-1.5 h-1.5 rounded-full bg-[#5C6BC0]"
+                      style={{ animation: `bounce 1.2s ease-in-out infinite ${d * 0.15}s` }} />
                   ))}
                 </div>
               )}
@@ -373,28 +323,17 @@ function LoadingState({ currentStep }: { currentStep: Step }) {
       <div className="w-full bg-[#ECEEF4] rounded-full h-1.5 overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-700"
-          style={{
-            width: `${((stepIndex + 0.5) / STEPS.length) * 100}%`,
-            background: "linear-gradient(90deg, #8691D3, #5C6BC0)",
-          }}
+          style={{ width: `${((stepIndex + 0.5) / STEPS.length) * 100}%`, background: "linear-gradient(90deg, #8691D3, #5C6BC0)" }}
         />
       </div>
 
-      <div
-        className="w-full rounded-2xl p-5 flex gap-4 items-center"
-        style={{
-          background: "linear-gradient(135deg, #FFF7E6, #FFEFC8)",
-          border: "1px solid #F4DC9E",
-        }}
-      >
+      <div className="w-full rounded-2xl p-5 flex gap-4 items-center"
+        style={{ background: "linear-gradient(135deg, #FFF7E6, #FFEFC8)", border: "1px solid #F4DC9E" }}>
         <div className="text-2xl">💡</div>
         <div>
-          <div className="text-xs font-bold text-[#9C6A0A] uppercase tracking-wider mb-0.5">
-            Fun fact
-          </div>
+          <div className="text-xs font-bold text-[#9C6A0A] uppercase tracking-wider mb-0.5">Fun fact</div>
           <div className="text-sm text-[#5C4310] font-medium leading-relaxed">
-            Students who test themselves remember{" "}
-            <strong>50% more</strong> than those who only re-read notes.
+            Students who test themselves remember <strong>50% more</strong> than those who only re-read notes.
           </div>
         </div>
       </div>
