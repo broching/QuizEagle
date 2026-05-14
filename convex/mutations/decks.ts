@@ -1,9 +1,8 @@
-import { internalMutation, mutation } from "../_generated/server";
+import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 
-export const createDeck = internalMutation({
+export const createDeck = mutation({
   args: {
-    userId: v.string(),
     title: v.string(),
     summary: v.string(),
     sourceType: v.union(v.literal("pdf"), v.literal("youtube")),
@@ -28,8 +27,12 @@ export const createDeck = internalMutation({
     ),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const userId = identity.subject;
+
     const deckId = await ctx.db.insert("decks", {
-      userId: args.userId,
+      userId,
       title: args.title,
       summary: args.summary,
       sourceType: args.sourceType,
@@ -43,7 +46,7 @@ export const createDeck = internalMutation({
     for (const fc of args.flashcards) {
       await ctx.db.insert("flashcards", {
         deckId,
-        userId: args.userId,
+        userId,
         front: fc.front,
         back: fc.back,
         difficulty: fc.difficulty,
@@ -54,7 +57,7 @@ export const createDeck = internalMutation({
     for (const q of args.quizQuestions) {
       await ctx.db.insert("quizQuestions", {
         deckId,
-        userId: args.userId,
+        userId,
         question: q.question,
         options: q.options,
         correctIndex: q.correctIndex,
