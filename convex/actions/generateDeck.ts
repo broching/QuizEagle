@@ -211,16 +211,15 @@ export const extractPdfText = action({
     pdfBase64: v.string(),
   },
   handler: async (_ctx, args) => {
-    const { PDFParse } = await import("pdf-parse");
+    const pdfParse = (await import("pdf-parse")).default;
     const buffer = Buffer.from(args.pdfBase64, "base64");
-    const parser = new PDFParse({ data: buffer });
-    const result = await parser.getText();
-    if (!result.text || result.text.trim().length === 0) {
+    const data = await pdfParse(buffer);
+    if (!data.text || data.text.trim().length === 0) {
       throw new Error(
         "Could not extract text from this PDF. Make sure it is not a scanned image."
       );
     }
-    return { text: result.text };
+    return { text: data.text };
   },
 });
 
