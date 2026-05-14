@@ -211,7 +211,9 @@ export async function POST(req: NextRequest) {
       if (!pdfBase64) return NextResponse.json({ error: "Missing pdfBase64" }, { status: 400 });
 
       ensureDOMPolyfills();
-      const { PDFParse } = await import("pdf-parse");
+      // @types/pdf-parse is v1; v2 exports PDFParse as a named class
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { PDFParse } = (await import("pdf-parse")) as any;
       const buffer = Buffer.from(pdfBase64, "base64");
       const parser = new PDFParse({ data: buffer });
       const result = await parser.getText();
