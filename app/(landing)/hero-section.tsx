@@ -26,23 +26,23 @@ export default function HeroSection() {
                                     </div>
                                     <span className="font-medium">Introducing AI Agents</span>
                                 </Link>
-                                <h1 className="mx-auto mt-8 max-w-3xl text-balance text-4xl font-bold tracking-tight sm:text-5xl">Build 10x Faster with Starter</h1>
-                                <p className="text-muted-foreground mx-auto my-6 max-w-xl text-balance text-xl">Craft. Build. Ship Modern Websites With AI Support.</p>
+                                <h1 className="mx-auto mt-8 max-w-3xl text-balance text-4xl font-bold tracking-tight sm:text-5xl">Turn any PDF or YouTube video into <span className="text-primary">flashcards & quizzes</span></h1>
+                                <p className="text-muted-foreground mx-auto my-6 max-w-xl text-balance text-xl">Drop in a lecture, textbook chapter, or study guide. Our AI returns a deck of flashcards and a multiple-choice quiz in under 30 seconds.</p>
 
                                 <div className="flex items-center justify-center gap-3">
                                     <Button
                                         asChild
                                         size="lg">
-                                        <Link href="#link">
-                                            <span className="text-nowrap">Start Building</span>
+                                        <Link href="/dashboard">
+                                            <span className="text-nowrap">Get Started Free</span>
                                         </Link>
                                     </Button>
                                     <Button
                                         asChild
                                         size="lg"
                                         variant="outline">
-                                        <Link href="#link">
-                                            <span className="text-nowrap">Watch Video</span>
+                                        <Link href="/dashboard/new">
+                                            <span className="text-nowrap">Generate a Deck</span>
                                         </Link>
                                     </Button>
                                 </div>

@@ -13,9 +13,13 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as actions_generateDeck from "../actions/generateDeck.js";
 import type * as http from "../http.js";
+import type * as mutations_attempts from "../mutations/attempts.js";
+import type * as mutations_decks from "../mutations/decks.js";
 import type * as paymentAttemptTypes from "../paymentAttemptTypes.js";
 import type * as paymentAttempts from "../paymentAttempts.js";
+import type * as queries_decks from "../queries/decks.js";
 import type * as users from "../users.js";
 
 /**
@@ -27,9 +31,13 @@ import type * as users from "../users.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  "actions/generateDeck": typeof actions_generateDeck;
   http: typeof http;
+  "mutations/attempts": typeof mutations_attempts;
+  "mutations/decks": typeof mutations_decks;
   paymentAttemptTypes: typeof paymentAttemptTypes;
   paymentAttempts: typeof paymentAttempts;
+  "queries/decks": typeof queries_decks;
   users: typeof users;
 }>;
 export declare const api: FilterApi<
