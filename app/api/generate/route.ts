@@ -117,9 +117,7 @@ type GeminiResult = {
 
 function cleanJson(raw: string): string {
   let s = raw.trim();
-  // Strip markdown code fences if present
   s = s.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
-  // Extract outermost JSON object in case there's surrounding text
   const match = s.match(/\{[\s\S]*\}/);
   return match ? match[0] : s;
 }
@@ -170,7 +168,6 @@ async function callGemini(key: string, text: string): Promise<GeminiResult> {
     parsed = JSON.parse(cleaned);
   } catch {
     console.error("Gemini raw response:", raw);
-    // Treat as soft error so rotation tries the next key
     throw new Error("JSON_PARSE_FAILED");
   }
   return parsed;
@@ -193,92 +190,81 @@ function truncateToWords(text: string, maxWords: number): string {
   return words.length <= maxWords ? text : words.slice(0, maxWords).join(" ");
 }
 
-function extractJsonFromPage(html: string, marker: string): unknown | null {
-  const idx = html.indexOf(marker);
-  if (idx === -1) return null;
-  const start = html.indexOf("{", idx + marker.length);
-  if (start === -1) return null;
-
-  let depth = 0;
-  let inStr = false;
-  let esc = false;
-  for (let i = start; i < html.length; i++) {
-    const ch = html[i];
-    if (esc) { esc = false; continue; }
-    if (ch === "\\" && inStr) { esc = true; continue; }
-    if (ch === '"') { inStr = !inStr; continue; }
-    if (inStr) continue;
-    if (ch === "{") depth++;
-    else if (ch === "}") {
-      depth--;
-      if (depth === 0) {
-        try { return JSON.parse(html.slice(start, i + 1)); } catch { return null; }
-      }
-    }
-  }
+function getDocumentType(fileName: string): "pdf" | "pptx" | "docx" | null {
+  const ext = fileName.split(".").pop()?.toLowerCase();
+  if (ext === "pdf") return "pdf";
+  if (ext === "pptx" || ext === "ppt") return "pptx";
+  if (ext === "docx" || ext === "doc") return "docx";
   return null;
 }
 
-async function fetchYouTubeTranscript(videoId: string): Promise<string> {
-  const pageRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-      "Accept-Language": "en-US,en;q=0.9",
-      Accept:
-        "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-    },
-  });
+async function extractPptxText(buffer: Buffer): Promise<string> {
+  const AdmZip = (await import("adm-zip")).default;
+  const zip = new AdmZip(buffer);
+  const slideEntries = zip.getEntries()
+    .filter((e) => /^ppt\/slides\/slide\d+\.xml$/.test(e.entryName))
+    .sort((a, b) => {
+      const numA = parseInt(a.entryName.match(/\d+/)?.[0] ?? "0");
+      const numB = parseInt(b.entryName.match(/\d+/)?.[0] ?? "0");
+      return numA - numB;
+    });
 
-  if (!pageRes.ok) throw new Error(`YouTube page fetch failed: ${pageRes.status}`);
-
-  const html = await pageRes.text();
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const playerResponse = extractJsonFromPage(html, "ytInitialPlayerResponse =") as any;
-  if (!playerResponse) throw new Error("Could not parse YouTube player response");
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const captionTracks: any[] | undefined =
-    playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
-
-  if (!captionTracks?.length) {
-    throw new Error("This video has no captions available. Try a video with subtitles enabled.");
+  const texts: string[] = [];
+  for (const entry of slideEntries) {
+    const xml = entry.getData().toString("utf8");
+    const matches = xml.match(/<a:t[^>]*>([^<]*)<\/a:t>/g) ?? [];
+    const slideText = matches.map((m) => m.replace(/<[^>]+>/g, "")).join(" ").trim();
+    if (slideText) texts.push(slideText);
   }
 
-  // Prefer English; fall back to first available track
-  const track =
-    captionTracks.find((t) => t.languageCode === "en") ??
-    captionTracks.find((t) => (t.languageCode as string).startsWith("en")) ??
-    captionTracks[0];
-
-  const captionUrl: string = track.baseUrl;
-  const captionRes = await fetch(`${captionUrl}&fmt=json3`);
-  if (!captionRes.ok) throw new Error(`Caption fetch failed: ${captionRes.status}`);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const captionData: any = await captionRes.json();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const events: any[] = captionData?.events ?? [];
-
-  const text = events
-    .filter((e) => Array.isArray(e.segs))
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map((e) => e.segs.map((s: any) => s.utf8 ?? "").join(""))
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  if (!text) throw new Error("No transcript text found in captions.");
+  const text = texts.join("\n\n");
+  if (!text.trim()) {
+    throw new Error("Could not extract text from this PowerPoint. Make sure it contains text slides.");
+  }
   return text;
+}
+
+async function extractDocxText(buffer: Buffer): Promise<string> {
+  const mammoth = await import("mammoth");
+  const result = await mammoth.extractRawText({ buffer });
+  if (!result.value.trim()) {
+    throw new Error("Could not extract text from this Word document.");
+  }
+  return result.value;
+}
+
+async function transcribeWithGroq(buffer: Buffer, fileName: string, mimeType: string): Promise<string> {
+  const groqKey = process.env.GROQ_API_KEY;
+  if (!groqKey) throw new Error("GROQ_API_KEY is not configured on the server.");
+
+  const form = new FormData();
+  const blob = new Blob([buffer], { type: mimeType || "video/mp4" });
+  form.append("file", blob, fileName);
+  form.append("model", "whisper-large-v3-turbo");
+  form.append("response_format", "text");
+
+  const res = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${groqKey}` },
+    body: form,
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Transcription failed (${res.status}): ${errText.slice(0, 300)}`);
+  }
+
+  const transcript = await res.text();
+  if (!transcript.trim()) throw new Error("The video has no speech to transcribe.");
+  return transcript;
 }
 
 export async function POST(req: NextRequest) {
   let body: {
-    sourceType: "pdf" | "youtube";
+    sourceType: "document" | "video";
     storageId?: string;
-    youtubeUrl?: string;
     fileName?: string;
+    mimeType?: string;
   };
 
   try {
@@ -287,55 +273,56 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { sourceType, storageId, youtubeUrl, fileName } = body;
+  const { sourceType, storageId, fileName, mimeType } = body;
 
-  // ── Step 1: extract text ──────────────────────────────────────────────────
+  if (!storageId) return NextResponse.json({ error: "Missing storageId" }, { status: 400 });
+
+  // ── Step 1: fetch file from Convex storage and extract text ──────────────────
   let text: string;
 
   try {
-    if (sourceType === "pdf") {
-      if (!storageId) return NextResponse.json({ error: "Missing storageId" }, { status: 400 });
+    const fileUrl = await convex.query(api.files.getFileUrl, {
+      storageId: storageId as Id<"_storage">,
+    });
+    if (!fileUrl) {
+      return NextResponse.json({ error: "File not found in storage" }, { status: 404 });
+    }
 
-      // Retrieve the signed download URL from Convex storage
-      const fileUrl = await convex.query(api.files.getFileUrl, { storageId: storageId as Id<"_storage"> });
-      if (!fileUrl) {
-        return NextResponse.json({ error: "File not found in storage" }, { status: 404 });
-      }
+    const fileRes = await fetch(fileUrl);
+    if (!fileRes.ok) {
+      return NextResponse.json({ error: "Failed to fetch file from storage" }, { status: 502 });
+    }
+    const buffer = Buffer.from(await fileRes.arrayBuffer());
 
-      // Download the PDF binary from Convex storage
-      const fileRes = await fetch(fileUrl);
-      if (!fileRes.ok) {
-        return NextResponse.json({ error: "Failed to fetch PDF from storage" }, { status: 502 });
-      }
-      const buffer = Buffer.from(await fileRes.arrayBuffer());
-
-      // pdf-parse v1 exports a default async function: pdfParse(buffer) => { text, ... }
-      const pdfParse = (await import("pdf-parse")).default;
-      const result = await pdfParse(buffer);
-      if (!result.text?.trim()) {
+    if (sourceType === "video") {
+      text = await transcribeWithGroq(buffer, fileName ?? "audio.mp4", mimeType ?? "video/mp4");
+    } else {
+      const docType = getDocumentType(fileName ?? "");
+      if (!docType) {
         return NextResponse.json(
-          { error: "Could not extract text from this PDF. Make sure it is not a scanned image." },
-          { status: 422 }
+          { error: "Unsupported file type. Please upload a PDF, PPTX, or DOCX." },
+          { status: 400 }
         );
       }
-      text = result.text;
-    } else {
-      if (!youtubeUrl) return NextResponse.json({ error: "Missing youtubeUrl" }, { status: 400 });
-      const match = youtubeUrl.match(
-        /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/|embed\/))([a-zA-Z0-9_-]{11})/
-      );
-      if (!match) return NextResponse.json({ error: "Invalid YouTube URL" }, { status: 400 });
-
-      try {
-        text = await fetchYouTubeTranscript(match[1]);
-      } catch (err) {
-        const msg =
-          err instanceof Error ? err.message : "Could not fetch transcript from this video.";
-        return NextResponse.json({ error: msg }, { status: 422 });
+      if (docType === "pdf") {
+        ensureDOMPolyfills();
+        const pdfParse = (await import("pdf-parse")).default;
+        const result = await pdfParse(buffer);
+        if (!result.text?.trim()) {
+          return NextResponse.json(
+            { error: "Could not extract text from this PDF. Make sure it is not a scanned image." },
+            { status: 422 }
+          );
+        }
+        text = result.text;
+      } else if (docType === "pptx") {
+        text = await extractPptxText(buffer);
+      } else {
+        text = await extractDocxText(buffer);
       }
     }
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Extraction failed";
+    const msg = err instanceof Error ? err.message : "File processing failed";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 
@@ -373,18 +360,14 @@ export async function POST(req: NextRequest) {
   }
 
   // Best-effort cleanup of temp file from Convex storage
-  if (sourceType === "pdf" && storageId) {
-    convex.mutation(api.files.deleteFile, { storageId: storageId as Id<"_storage"> }).catch((err) => {
-      console.warn("Failed to delete temp file from Convex storage:", err);
-    });
-  }
+  convex.mutation(api.files.deleteFile, { storageId: storageId as Id<"_storage"> }).catch((err) => {
+    console.warn("Failed to delete temp file from Convex storage:", err);
+  });
 
-  // Return structured data — client saves to Convex
   return NextResponse.json({
     title: parsed.title,
     summary: parsed.summary,
     sourceType,
-    sourceUrl: youtubeUrl,
     sourceFileName: fileName,
     flashcards: parsed.flashcards.map((fc, i) => ({
       front: fc.front,
