@@ -1,4 +1,3 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
 // Polyfill browser DOM globals required by pdfjs-dist (used by pdf-parse v2)
@@ -144,11 +143,15 @@ async function callGemini(key: string, text: string): Promise<GeminiResult> {
     }),
   });
 
+  if (res.status === 401 || res.status === 403) {
+    throw new Error(`Gemini auth error ${res.status}: API key is invalid or unauthorized`);
+  }
   if (res.status === 429 || res.status >= 500) {
     throw new Error(`Gemini HTTP ${res.status}`);
   }
   if (!res.ok) {
-    throw new Error(`Gemini error: ${await res.text()}`);
+    const errText = await res.text();
+    throw new Error(`Gemini HTTP ${res.status}: ${errText.slice(0, 200)}`);
   }
 
   const data = await res.json();
@@ -185,9 +188,6 @@ function truncateToWords(text: string, maxWords: number): string {
 }
 
 export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
   let body: {
     sourceType: "pdf" | "youtube";
     pdfBase64?: string;
@@ -272,7 +272,8 @@ export async function POST(req: NextRequest) {
       break;
     } catch (err) {
       if (isRetryableError(err)) continue;
-      return NextResponse.json({ error: "Gemini request failed unexpectedly" }, { status: 502 });
+      const msg = err instanceof Error ? err.message : "Gemini request failed";
+      return NextResponse.json({ error: msg }, { status: 502 });
     }
   }
 
