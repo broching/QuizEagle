@@ -1,8 +1,8 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { use, useState, useEffect, useCallback } from "react";
+import { use, useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,6 +28,15 @@ export default function SharedDeckPage({
 }) {
   const { token } = use(params);
   const data = useQuery(api.queries.decks.getSharedDeck, { shareToken: token });
+  const incrementView = useMutation(api.mutations.decks.incrementDeckView);
+  const viewFired = useRef(false);
+
+  useEffect(() => {
+    if (data && !viewFired.current) {
+      viewFired.current = true;
+      incrementView({ shareToken: token }).catch(() => {});
+    }
+  }, [data, token, incrementView]);
 
   if (data === undefined) {
     return (

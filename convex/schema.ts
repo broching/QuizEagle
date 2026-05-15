@@ -26,6 +26,7 @@ export default defineSchema({
       quizCount: v.number(),
       isShared: v.optional(v.boolean()),
       shareToken: v.optional(v.string()),
+      viewCount: v.optional(v.number()),
     }).index("by_user", ["userId"])
       .index("by_shareToken", ["shareToken"]),
 

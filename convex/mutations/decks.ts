@@ -135,3 +135,17 @@ export const unshareDeck = mutation({
     await ctx.db.patch(args.deckId, { isShared: false });
   },
 });
+
+export const incrementDeckView = mutation({
+  args: { shareToken: v.string() },
+  handler: async (ctx, args) => {
+    const deck = await ctx.db
+      .query("decks")
+      .withIndex("by_shareToken", (q) => q.eq("shareToken", args.shareToken))
+      .first();
+
+    if (!deck || !deck.isShared) return;
+
+    await ctx.db.patch(deck._id, { viewCount: (deck.viewCount ?? 0) + 1 });
+  },
+});

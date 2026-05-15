@@ -23,6 +23,7 @@ import {
   ChevronUp,
   Trophy,
   Share2,
+  Eye,
 } from "lucide-react";
 import { SharePanel } from "@/components/share-panel";
 
@@ -80,6 +81,11 @@ export default function DeckPage({
         </div>
         <p className="text-sm text-[#6A6F87] mt-1">
           {deck.flashcardCount} flashcards · {deck.quizCount} quiz questions
+          {deck.isShared && (deck.viewCount ?? 0) > 0 && (
+            <span className="ml-3 inline-flex items-center gap-1 text-xs text-[#8D92A8]">
+              · <Eye size={12} className="inline" /> {(deck.viewCount ?? 0).toLocaleString()} {deck.viewCount === 1 ? "view" : "views"}
+            </span>
+          )}
         </p>
       </div>
 

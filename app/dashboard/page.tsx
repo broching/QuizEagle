@@ -25,7 +25,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { SharePanel } from "@/components/share-panel";
-import { Layers, Video, FileText, Trash2, Plus, Brain, Share2 } from "lucide-react";
+import { Layers, Video, FileText, Trash2, Plus, Brain, Share2, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 
@@ -127,6 +127,7 @@ function DeckCard({
     quizCount: number;
     isShared?: boolean;
     shareToken?: string;
+    viewCount?: number;
   };
   onDelete: (id: Id<"decks">) => void;
   deleting: boolean;
@@ -180,6 +181,15 @@ function DeckCard({
             >
               <Share2 size={10} />
               Shared
+            </Badge>
+          )}
+          {deck.isShared && (deck.viewCount ?? 0) > 0 && (
+            <Badge
+              variant="secondary"
+              className="gap-1 text-xs bg-[#F7F8FB] text-[#6A6F87] border border-[#ECEEF4] font-semibold"
+            >
+              <Eye size={10} />
+              {deck.viewCount?.toLocaleString()} {deck.viewCount === 1 ? "view" : "views"}
             </Badge>
           )}
         </div>
