@@ -13,7 +13,7 @@ export function DashboardNav() {
   return (
     <nav className="h-16 px-10 flex items-center justify-between bg-white border-b border-[#ECEEF4] sticky top-0 z-50">
       <Link href="/dashboard" className="flex items-center gap-2.5 no-underline">
-        <img src="/download.svg" alt="Quiz Eagle" style={{ height: '36px', width: 'auto' }} />
+        <img src="/download.svg" alt="Quiz Eagle" style={{ height: '108px', width: 'auto' }} />
       </Link>
 
       <div className="flex items-center gap-4">

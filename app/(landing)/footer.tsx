@@ -12,7 +12,7 @@ export default function FooterSection() {
         <footer className="py-12 md:py-16 border-t border-border">
             <div className="mx-auto max-w-5xl px-6">
                 <div className="flex items-center justify-center gap-2 mb-8">
-                    <img src="/download.svg" alt="Quiz Eagle" style={{ height: '40px', width: 'auto' }} />
+                    <img src="/download.svg" alt="Quiz Eagle" style={{ height: '120px', width: 'auto' }} />
                 </div>
 
                 <div className="flex flex-wrap justify-center gap-6 text-sm mb-8">
