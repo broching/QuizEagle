@@ -13,18 +13,7 @@ export function DashboardNav() {
   return (
     <nav className="h-16 px-10 flex items-center justify-between bg-white border-b border-[#ECEEF4] sticky top-0 z-50">
       <Link href="/dashboard" className="flex items-center gap-2.5 no-underline">
-        <div
-          className="w-8 h-8 rounded-[9px] flex items-center justify-center text-white font-extrabold text-base"
-          style={{
-            background: "linear-gradient(135deg, #5C6BC0, #404A93)",
-            boxShadow: "0 2px 8px rgba(92,107,192,.32)",
-          }}
-        >
-          S
-        </div>
-        <span className="font-bold text-[19px] tracking-tight text-[#15172B]">
-          SmartStudy
-        </span>
+        <img src="/download.svg" alt="Quiz Eagle" style={{ height: '36px', width: 'auto' }} />
       </Link>
 
       <div className="flex items-center gap-4">

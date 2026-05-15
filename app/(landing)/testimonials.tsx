@@ -13,31 +13,31 @@ const testimonials: Testimonial[] = [
         name: 'Sarah Chen',
         role: 'Medical Student',
         image: 'https://randomuser.me/api/portraits/women/44.jpg',
-        quote: 'I uploaded my pharmacology lecture PDFs and had flashcards ready in under a minute. My exam scores went up 15% after switching to SmartStudy.',
+        quote: 'I uploaded my pharmacology lecture PDFs and had flashcards ready in under a minute. My exam scores went up 15% after switching to Quiz Eagle.',
     },
     {
         name: 'Marcus Williams',
         role: 'Computer Science Undergrad',
         image: 'https://randomuser.me/api/portraits/men/32.jpg',
-        quote: 'I paste YouTube links from coding tutorials and instantly get quiz questions. Way better than rewatching 2-hour videos the night before an exam.',
+        quote: 'I upload lecture recordings and coding tutorial videos and instantly get quiz questions. Way better than rewatching 2-hour videos the night before an exam.',
     },
     {
         name: 'Priya Sharma',
         role: 'Law Student',
         image: 'https://randomuser.me/api/portraits/women/68.jpg',
-        quote: 'Case summaries, statutes, lecture notes — SmartStudy handles them all. The AI-generated quiz explanations are surprisingly accurate for legal content.',
+        quote: 'Case summaries, statutes, lecture notes — Quiz Eagle handles them all. The AI-generated quiz explanations are surprisingly accurate for legal content.',
     },
     {
         name: 'Tom Eriksson',
         role: 'High School Teacher',
         image: 'https://randomuser.me/api/portraits/men/75.jpg',
-        quote: 'I use SmartStudy to create review materials for my students. What used to take me an hour to make now takes 30 seconds. Absolute game changer.',
+        quote: 'I use Quiz Eagle to create review materials for my students. What used to take me an hour to make now takes 30 seconds. Absolute game changer.',
     },
     {
         name: 'Aisha Okonkwo',
         role: 'MBA Candidate',
         image: 'https://randomuser.me/api/portraits/women/12.jpg',
-        quote: 'Between classes, case studies, and internship prep, I have zero time to make flashcards manually. SmartStudy does it for me instantly.',
+        quote: 'Between classes, case studies, and internship prep, I have zero time to make flashcards manually. Quiz Eagle does it for me instantly.',
     },
     {
         name: 'Diego Ramírez',
@@ -65,7 +65,7 @@ export default function WallOfLoveSection() {
                     <p className="text-sm font-bold text-primary uppercase tracking-widest mb-3">Student Stories</p>
                     <h2 className="text-4xl font-bold tracking-tight text-foreground">Loved by learners everywhere</h2>
                     <p className="text-muted-foreground mt-4 text-lg max-w-xl mx-auto">
-                        From med school to coding bootcamps — students use SmartStudy to study faster and remember more.
+                        From med school to coding bootcamps — students use Quiz Eagle to study faster and remember more.
                     </p>
                 </div>
                 <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

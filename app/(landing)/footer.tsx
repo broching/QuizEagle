@@ -12,8 +12,7 @@ export default function FooterSection() {
         <footer className="py-12 md:py-16 border-t border-border">
             <div className="mx-auto max-w-5xl px-6">
                 <div className="flex items-center justify-center gap-2 mb-8">
-                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#5C6BC0] to-[#404A93] text-white font-black text-sm flex items-center justify-center">S</div>
-                    <span className="text-xl font-bold text-foreground">SmartStudy</span>
+                    <img src="/download.svg" alt="Quiz Eagle" style={{ height: '40px', width: 'auto' }} />
                 </div>
 
                 <div className="flex flex-wrap justify-center gap-6 text-sm mb-8">
@@ -38,7 +37,7 @@ export default function FooterSection() {
                 </div>
 
                 <span className="text-muted-foreground block text-center text-sm">
-                    © {new Date().getFullYear()} SmartStudy. All rights reserved.
+                    © {new Date().getFullYear()} Quiz Eagle. All rights reserved.
                 </span>
             </div>
         </footer>
