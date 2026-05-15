@@ -340,9 +340,17 @@ function ResultView({ result, onGenerateAnother }: { result: GenerateResult; onG
   const { isSignedIn } = useAuth();
   const createDeck = useMutation(api.mutations.decks.createDeck);
   const [saving, setSaving] = useState(false);
+  const [savedDeckId, setSavedDeckId] = useState<string | null>(null);
 
-  async function handleSave() {
-    if (!isSignedIn) return;
+  // Auto-save immediately when a signed-in user sees results
+  useEffect(() => {
+    if (isSignedIn && !savedDeckId) {
+      autoSave();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSignedIn]);
+
+  async function autoSave() {
     setSaving(true);
     try {
       const deckId = await createDeck({
@@ -354,10 +362,11 @@ function ResultView({ result, onGenerateAnother }: { result: GenerateResult; onG
         flashcards: result.flashcards,
         quizQuestions: result.quizQuestions,
       });
+      setSavedDeckId(String(deckId));
       toast.success("Deck saved to your account!");
-      router.push(`/dashboard/decks/${deckId}`);
     } catch {
       toast.error("Failed to save deck. Please try again.");
+    } finally {
       setSaving(false);
     }
   }
@@ -373,10 +382,23 @@ function ResultView({ result, onGenerateAnother }: { result: GenerateResult; onG
           </div>
           <div className="flex flex-row sm:flex-col gap-2 sm:shrink-0">
             {isSignedIn ? (
-              <Button onClick={handleSave} disabled={saving} className="flex-1 sm:flex-none bg-[#4255ff] hover:bg-[#3346ee] text-white gap-2 disabled:opacity-60">
-                {saving ? <Loader2 size={15} className="animate-spin" /> : <BookOpen size={15} />}
-                Save to My Decks
-              </Button>
+              saving ? (
+                <div className="flex items-center gap-2 text-sm text-[#6A6F87] px-3 py-2">
+                  <Loader2 size={14} className="animate-spin text-[#4255ff]" />
+                  <span>Saving…</span>
+                </div>
+              ) : savedDeckId ? (
+                <Button
+                  onClick={() => router.push(`/dashboard/decks/${savedDeckId}`)}
+                  className="flex-1 sm:flex-none bg-[#4255ff] hover:bg-[#3346ee] text-white gap-2"
+                >
+                  <BookOpen size={15} />View Deck →
+                </Button>
+              ) : (
+                <Button onClick={autoSave} disabled={saving} className="flex-1 sm:flex-none bg-[#4255ff] hover:bg-[#3346ee] text-white gap-2 disabled:opacity-60">
+                  <BookOpen size={15} />Save to My Decks
+                </Button>
+              )
             ) : (
               <SignUpButton mode="modal">
                 <Button className="flex-1 sm:flex-none w-full bg-[#4255ff] hover:bg-[#3346ee] text-white gap-2">
