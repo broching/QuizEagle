@@ -21,11 +21,10 @@ export const getDeck = query({
   args: { deckId: v.id("decks") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    if (!identity) return null;
 
     const deck = await ctx.db.get(args.deckId);
-    if (!deck) throw new Error("Deck not found");
-    if (deck.userId !== identity.subject) throw new Error("Unauthorized");
+    if (!deck || deck.userId !== identity.subject) return null;
 
     const flashcards = await ctx.db
       .query("flashcards")
@@ -47,11 +46,10 @@ export const getAttempts = query({
   args: { deckId: v.id("decks") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    if (!identity) return [];
 
     const deck = await ctx.db.get(args.deckId);
-    if (!deck) throw new Error("Deck not found");
-    if (deck.userId !== identity.subject) throw new Error("Unauthorized");
+    if (!deck || deck.userId !== identity.subject) return [];
 
     const attempts = await ctx.db
       .query("quizAttempts")

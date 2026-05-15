@@ -67,8 +67,8 @@ export default function NewDeckPage() {
           setStep("idle");
           return;
         }
-        if (pdfFile.size > 20 * 1024 * 1024) {
-          toast.error("PDF must be under 20 MB.");
+        if (pdfFile.size > 3 * 1024 * 1024) {
+          toast.error("PDF must be under 3 MB (Vercel's request size limit).");
           setStep("idle");
           return;
         }
@@ -87,6 +87,9 @@ export default function NewDeckPage() {
         body: JSON.stringify(body),
       });
 
+      if (res.status === 413) {
+        throw new Error("PDF is too large. Please use a file under 3 MB.");
+      }
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error ?? `Server error ${res.status}`);
@@ -236,7 +239,7 @@ export default function NewDeckPage() {
                 <div className="text-sm font-semibold text-[#15172B]">
                   Drop a PDF here or <span className="text-[#5C6BC0]">browse files</span>
                 </div>
-                <div className="text-xs text-[#8D92A8] mt-1">Max 20 MB · PDF only</div>
+                <div className="text-xs text-[#8D92A8] mt-1">Max 3 MB · PDF only</div>
                 <input
                   ref={fileInputRef}
                   type="file"
