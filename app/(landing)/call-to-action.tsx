@@ -1,34 +1,83 @@
-import { Button } from '@/components/ui/button'
-import Link from 'next/link'
-import PixelCard from '@/components/react-bits/pixel-card'
+"use client"
+
+import { motion } from "framer-motion"
+import Link from "next/link"
+import { ArrowRight, Sparkles } from "lucide-react"
 
 export default function CallToAction() {
     return (
-        <section className="py-16 px-6">
-            <div className="mx-auto max-w-5xl rounded-3xl px-6 py-12 md:py-20 lg:py-32">
-                <PixelCard variant="blue" className="w-full max-w-5xl h-auto aspect-[16/9]">
-                    <div className="absolute text-center px-6">
-                        <p className="text-sm font-bold uppercase tracking-widest text-white/70 mb-3">Get started free</p>
-                        <h2 className="text-balance text-4xl font-extrabold lg:text-5xl text-white">Study smarter, not harder</h2>
-                        <p className="mt-4 text-white/80 text-lg max-w-md mx-auto">
-                            Turn any PDF or YouTube video into flashcards and quizzes in seconds. No credit card required.
-                        </p>
+        <section className="py-20 md:py-32 px-6" style={{ background: "#f0f2fc" }}>
+            <motion.div
+                className="mx-auto max-w-3xl rounded-3xl px-8 py-16 md:py-20 text-center relative overflow-hidden"
+                style={{
+                    background: "linear-gradient(135deg, #1a1d3b 0%, #2a2f6e 60%, #3d3080 100%)",
+                    boxShadow: "0 24px 80px rgba(66,85,255,0.30)",
+                }}
+                initial={{ opacity: 0, y: 32 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-80px" }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+            >
+                {/* Subtle glow orbs */}
+                <div
+                    className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-40 rounded-full pointer-events-none"
+                    style={{ background: "radial-gradient(ellipse, rgba(66,85,255,0.35) 0%, transparent 70%)", filter: "blur(40px)" }}
+                />
+                <div
+                    className="absolute bottom-0 right-0 w-64 h-64 rounded-full pointer-events-none"
+                    style={{ background: "radial-gradient(ellipse, rgba(124,58,237,0.25) 0%, transparent 70%)", filter: "blur(50px)" }}
+                />
 
-                        <div className="mt-10 flex flex-wrap justify-center gap-4">
-                            <Button asChild size="lg" className="bg-white text-[#5C6BC0] hover:bg-white/90 font-bold">
-                                <Link href="/dashboard">
-                                    <span>Start for Free</span>
-                                </Link>
-                            </Button>
-                            <Button asChild size="lg" variant="outline" className="border-white/40 text-white hover:bg-white/10 hover:text-white">
-                                <Link href="#how-it-works">
-                                    <span>See how it works</span>
-                                </Link>
-                            </Button>
-                        </div>
+                <motion.div
+                    className="relative"
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.15, ease: "easeOut" }}
+                >
+                    <div className="flex justify-center mb-5">
+                        <span
+                            className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest px-3.5 py-1.5 rounded-full"
+                            style={{ background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.85)", border: "1px solid rgba(255,255,255,0.18)" }}
+                        >
+                            <Sparkles size={11} />
+                            Get started free
+                        </span>
                     </div>
-                </PixelCard>
-            </div>
+
+                    <h2
+                        className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4"
+                        style={{ color: "#ffffff", lineHeight: 1.15 }}
+                    >
+                        Study smarter,<br />not harder
+                    </h2>
+
+                    <p
+                        className="text-base md:text-lg max-w-md mx-auto mb-10 leading-relaxed"
+                        style={{ color: "rgba(255,255,255,0.72)" }}
+                    >
+                        Turn any PDF, PPTX, DOCX, or video into flashcards and a quiz in seconds. No credit card required.
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                        <Link
+                            href="/dashboard"
+                            className="inline-flex items-center gap-2 font-bold px-7 py-3 rounded-xl text-sm transition-all duration-200 hover:scale-105 active:scale-95"
+                            style={{ background: "#ffffff", color: "#1a1d3b", boxShadow: "0 4px 20px rgba(255,255,255,0.25)" }}
+                        >
+                            Start for Free
+                            <ArrowRight size={15} />
+                        </Link>
+                        <Link
+                            href="#"
+                            className="inline-flex items-center gap-2 font-semibold px-7 py-3 rounded-xl text-sm transition-all duration-200 hover:bg-white/10"
+                            style={{ color: "rgba(255,255,255,0.85)", border: "1px solid rgba(255,255,255,0.25)" }}
+                        >
+                            See how it works
+                        </Link>
+                    </div>
+                </motion.div>
+            </motion.div>
         </section>
     )
 }

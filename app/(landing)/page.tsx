@@ -90,12 +90,24 @@ export default function Home() {
       <div>
         <HeroSection />
         <FeaturesOne />
-        <section className="bg-muted/50 py-16 md:py-32">
+        <section id="pricing" style={{ background: "#f0f2fc" }} className="py-20 md:py-32">
           <div className="mx-auto max-w-7xl px-6">
-            <div className="mb-12 mx-auto max-w-2xl space-y-6 text-center">
-              <p className="text-sm font-bold text-primary uppercase tracking-widest">Pricing</p>
-              <h2 className="text-center text-4xl font-bold lg:text-5xl">Simple, transparent pricing</h2>
-              <p className="text-muted-foreground text-lg">Start free and upgrade when you need more. No hidden fees, no surprise charges.</p>
+            <div className="mb-12 mx-auto max-w-2xl space-y-4 text-center">
+              <span
+                className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full"
+                style={{ background: "#eef0ff", color: "#4255ff" }}
+              >
+                Pricing
+              </span>
+              <h2
+                className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight"
+                style={{ color: "#1a1d3b" }}
+              >
+                Simple, transparent pricing
+              </h2>
+              <p className="text-base md:text-lg leading-relaxed" style={{ color: "#6b6f9a" }}>
+                Start free and upgrade when you need more. No hidden fees, no surprise charges.
+              </p>
             </div>
             <CustomClerkPricing />
           </div>
