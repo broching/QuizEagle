@@ -22,7 +22,9 @@ import {
   ChevronDown,
   ChevronUp,
   Trophy,
+  Share2,
 } from "lucide-react";
+import { SharePanel } from "@/components/share-panel";
 
 export default function DeckPage({
   params,
@@ -30,6 +32,7 @@ export default function DeckPage({
   params: Promise<{ deckId: string }>;
 }) {
   const { deckId } = use(params);
+  const [shareOpen, setShareOpen] = useState(false);
   const data = useQuery(api.queries.decks.getDeck, {
     deckId: deckId as Id<"decks">,
   });
@@ -61,13 +64,32 @@ export default function DeckPage({
         <p className="text-xs font-bold text-[#5C6BC0] uppercase tracking-widest mb-1">
           Your study session
         </p>
-        <h1 className="text-3xl font-extrabold text-[#15172B] tracking-tight">
-          {deck.title}
-        </h1>
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="text-3xl font-extrabold text-[#15172B] tracking-tight">
+            {deck.title}
+          </h1>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShareOpen(true)}
+            className="gap-1.5 text-[#6A6F87] hover:text-[#5C6BC0] hover:bg-[#EEF0FB] shrink-0 mt-1"
+          >
+            <Share2 size={15} />
+            Share
+          </Button>
+        </div>
         <p className="text-sm text-[#6A6F87] mt-1">
           {deck.flashcardCount} flashcards · {deck.quizCount} quiz questions
         </p>
       </div>
+
+      <SharePanel
+        deckId={deckId as Id<"decks">}
+        isShared={deck.isShared}
+        shareToken={deck.shareToken}
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+      />
 
       <Tabs defaultValue="flashcards">
         <TabsList className="mb-6 bg-[#ECEEF4] p-1 rounded-xl h-auto">

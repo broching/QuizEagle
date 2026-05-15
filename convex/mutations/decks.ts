@@ -101,3 +101,37 @@ export const deleteDeck = mutation({
     await ctx.db.delete(args.deckId);
   },
 });
+
+function generateShareToken(): string {
+  return Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10);
+}
+
+export const shareDeck = mutation({
+  args: { deckId: v.id("decks") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const deck = await ctx.db.get(args.deckId);
+    if (!deck) throw new Error("Deck not found");
+    if (deck.userId !== identity.subject) throw new Error("Unauthorized");
+
+    const token = deck.shareToken ?? generateShareToken();
+    await ctx.db.patch(args.deckId, { isShared: true, shareToken: token });
+    return token;
+  },
+});
+
+export const unshareDeck = mutation({
+  args: { deckId: v.id("decks") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const deck = await ctx.db.get(args.deckId);
+    if (!deck) throw new Error("Deck not found");
+    if (deck.userId !== identity.subject) throw new Error("Unauthorized");
+
+    await ctx.db.patch(args.deckId, { isShared: false });
+  },
+});

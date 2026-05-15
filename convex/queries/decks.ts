@@ -42,6 +42,32 @@ export const getDeck = query({
   },
 });
 
+export const getSharedDeck = query({
+  args: { shareToken: v.string() },
+  handler: async (ctx, args) => {
+    const deck = await ctx.db
+      .query("decks")
+      .withIndex("by_shareToken", (q) => q.eq("shareToken", args.shareToken))
+      .first();
+
+    if (!deck || !deck.isShared) return null;
+
+    const flashcards = await ctx.db
+      .query("flashcards")
+      .withIndex("by_deck", (q) => q.eq("deckId", deck._id))
+      .order("asc")
+      .collect();
+
+    const quizQuestions = await ctx.db
+      .query("quizQuestions")
+      .withIndex("by_deck", (q) => q.eq("deckId", deck._id))
+      .order("asc")
+      .collect();
+
+    return { deck, flashcards, quizQuestions };
+  },
+});
+
 export const getAttempts = query({
   args: { deckId: v.id("decks") },
   handler: async (ctx, args) => {
