@@ -1,9 +1,7 @@
 'use client'
 import Link from 'next/link'
-import { ChatMaxingIconColoured } from '@/components/logo'
 import { Loader2, Menu, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import React from 'react'
 import { cn } from '@/lib/utils'
 
@@ -16,10 +14,9 @@ import { useTheme } from "next-themes"
 
 
 const menuItems = [
-    { name: 'Features', href: '#link' },
-    { name: 'Solution', href: '#link' },
-    { name: 'Pricing', href: '#link' },
-    { name: 'About', href: '#link' },
+    { name: 'Features', href: '#' },
+    { name: 'Pricing', href: '#' },
+    { name: 'FAQ', href: '#' },
 ]
 
 export const HeroHeader = () => {
@@ -46,13 +43,9 @@ export const HeroHeader = () => {
                 <div className={cn('mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-12', isScrolled && 'bg-background/50 max-w-4xl rounded-2xl border backdrop-blur-lg lg:px-5')}>
                     <div className="relative flex flex-wrap items-center justify-between gap-6 py-3 lg:gap-0 lg:py-4">
                         <div className="flex w-full justify-between lg:w-auto">
-                            <Link
-                                href="/"
-                                aria-label="home"
-                                className="flex items-center space-x-2">
-                                <ChatMaxingIconColoured />
-                                <span className="text-xl font-medium">Starter.diy</span>
-                                <Badge variant="outline" className="text-muted-foreground  text-xs">Demo</Badge>
+                            <Link href="/" aria-label="home" className="flex items-center space-x-2">
+                                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#5C6BC0] to-[#404A93] text-white font-black text-sm flex items-center justify-center">S</div>
+                                <span className="text-xl font-bold">SmartStudy</span>
                             </Link>
 
                             <button

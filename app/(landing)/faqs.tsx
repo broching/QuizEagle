@@ -4,39 +4,44 @@ export default function FAQs() {
             <div className="mx-auto max-w-5xl px-6">
                 <div className="grid gap-y-12 px-2 lg:[grid-template-columns:1fr_auto]">
                     <div className="text-center lg:text-left">
-                        <h2 className="mb-4 text-3xl font-semibold md:text-4xl">
+                        <p className="text-sm font-bold text-primary uppercase tracking-widest mb-3">FAQ</p>
+                        <h2 className="mb-4 text-3xl font-bold md:text-4xl">
                             Frequently <br className="hidden lg:block" /> Asked <br className="hidden lg:block" />
                             Questions
                         </h2>
-                        <p>Accusantium quisquam. Illo, omnis?</p>
+                        <p className="text-muted-foreground">Can&apos;t find an answer? <a href="mailto:support@smartstudy.app" className="text-primary underline underline-offset-4">Email us</a>.</p>
                     </div>
 
                     <div className="divide-y divide-dashed sm:mx-auto sm:max-w-lg lg:mx-0">
                         <div className="pb-6">
-                            <h3 className="font-medium">What is the refund policy?</h3>
-                            <p className="text-muted-foreground mt-4">We offer a 30-day money back guarantee. If you are not satisfied with our product, you can request a refund within 30 days of your purchase.</p>
-
-                            <ol className="list-outside list-decimal space-y-2 pl-4">
-                                <li className="text-muted-foreground mt-4">To request a refund, please contact our support team with your order number and reason for the refund.</li>
-                                <li className="text-muted-foreground mt-4">Refunds will be processed within 3-5 business days.</li>
-                                <li className="text-muted-foreground mt-4">Please note that refunds are only available for new customers and are limited to one per customer.</li>
-                            </ol>
+                            <h3 className="font-semibold">Is SmartStudy really free to use?</h3>
+                            <p className="text-muted-foreground mt-4 text-sm leading-relaxed">
+                                Yes — you can generate flashcard decks and quizzes without signing up, completely free. Creating an account lets you save decks to your dashboard and track your quiz progress over time. We offer paid plans for power users who need higher limits.
+                            </p>
                         </div>
                         <div className="py-6">
-                            <h3 className="font-medium">How do I cancel my subscription?</h3>
-                            <p className="text-muted-foreground mt-4">You can cancel your subscription at any time by logging into your account and clicking on the cancel button.</p>
+                            <h3 className="font-semibold">What file types and sizes are supported?</h3>
+                            <p className="text-muted-foreground mt-4 text-sm leading-relaxed">
+                                SmartStudy supports PDF files up to 20 MB. Text must be selectable (not a scanned image). For YouTube, any public video with captions enabled works — just paste the URL. We support standard, Shorts, and embed formats.
+                            </p>
                         </div>
                         <div className="py-6">
-                            <h3 className="font-medium">Can I upgrade my plan?</h3>
-                            <p className="text-muted-foreground my-4">Yes, you can upgrade your plan at any time by logging into your account and selecting the plan you want to upgrade to.</p>
-                            <ul className="list-outside list-disc space-y-2 pl-4">
-                                <li className="text-muted-foreground">You will be charged the difference in price between your current plan and the plan you are upgrading to.</li>
-                                <li className="text-muted-foreground">Your new plan will take effect immediately and you will be billed at the new rate on your next billing cycle.</li>
-                            </ul>
+                            <h3 className="font-semibold">How accurate are the AI-generated flashcards?</h3>
+                            <p className="text-muted-foreground mt-4 text-sm leading-relaxed">
+                                SmartStudy uses Google&apos;s Gemini model to identify key concepts, definitions, and facts from your content. Accuracy is high for well-structured academic material. We always recommend reviewing the generated deck before your exam to catch any gaps.
+                            </p>
                         </div>
                         <div className="py-6">
-                            <h3 className="font-medium">Do you offer phone support?</h3>
-                            <p className="text-muted-foreground mt-4">We do not offer phone support at this time. However, you can contact us via email or live chat for any questions or concerns you may have.</p>
+                            <h3 className="font-semibold">Can I save and revisit my decks?</h3>
+                            <p className="text-muted-foreground mt-4 text-sm leading-relaxed">
+                                Yes — sign up for a free account and every deck you generate is saved to your personal dashboard. You can review flashcards, retake quizzes, and track your score history at any time.
+                            </p>
+                        </div>
+                        <div className="py-6">
+                            <h3 className="font-semibold">How long does generation take?</h3>
+                            <p className="text-muted-foreground mt-4 text-sm leading-relaxed">
+                                Most decks are ready in under 30 seconds. Longer PDFs or videos may take up to a minute. We process your content with Gemini 2.5 Flash, one of the fastest AI models available, so wait times are minimal.
+                            </p>
                         </div>
                     </div>
                 </div>
