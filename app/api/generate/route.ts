@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 // Polyfill browser DOM globals required by pdfjs-dist (used by pdf-parse v2)
 // Must run before any pdf-parse import
@@ -139,6 +144,7 @@ async function callGemini(key: string, text: string): Promise<GeminiResult> {
         maxOutputTokens: 4096,
         responseMimeType: "application/json",
         responseSchema: RESPONSE_SCHEMA,
+        thinkingConfig: { thinkingBudget: 0 },
       },
     }),
   });
@@ -270,7 +276,7 @@ async function fetchYouTubeTranscript(videoId: string): Promise<string> {
 export async function POST(req: NextRequest) {
   let body: {
     sourceType: "pdf" | "youtube";
-    pdfBase64?: string;
+    storageId?: string;
     youtubeUrl?: string;
     fileName?: string;
   };
@@ -281,18 +287,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { sourceType, pdfBase64, youtubeUrl, fileName } = body;
+  const { sourceType, storageId, youtubeUrl, fileName } = body;
 
   // ── Step 1: extract text ──────────────────────────────────────────────────
   let text: string;
 
   try {
     if (sourceType === "pdf") {
-      if (!pdfBase64) return NextResponse.json({ error: "Missing pdfBase64" }, { status: 400 });
+      if (!storageId) return NextResponse.json({ error: "Missing storageId" }, { status: 400 });
+
+      // Retrieve the signed download URL from Convex storage
+      const fileUrl = await convex.query(api.files.getFileUrl, { storageId: storageId as Id<"_storage"> });
+      if (!fileUrl) {
+        return NextResponse.json({ error: "File not found in storage" }, { status: 404 });
+      }
+
+      // Download the PDF binary from Convex storage
+      const fileRes = await fetch(fileUrl);
+      if (!fileRes.ok) {
+        return NextResponse.json({ error: "Failed to fetch PDF from storage" }, { status: 502 });
+      }
+      const buffer = Buffer.from(await fileRes.arrayBuffer());
 
       // pdf-parse v1 exports a default async function: pdfParse(buffer) => { text, ... }
       const pdfParse = (await import("pdf-parse")).default;
-      const buffer = Buffer.from(pdfBase64, "base64");
       const result = await pdfParse(buffer);
       if (!result.text?.trim()) {
         return NextResponse.json(
@@ -352,6 +370,13 @@ export async function POST(req: NextRequest) {
       { error: "All Gemini keys exhausted. Please try again later." },
       { status: 503 }
     );
+  }
+
+  // Best-effort cleanup of temp file from Convex storage
+  if (sourceType === "pdf" && storageId) {
+    convex.mutation(api.files.deleteFile, { storageId: storageId as Id<"_storage"> }).catch((err) => {
+      console.warn("Failed to delete temp file from Convex storage:", err);
+    });
   }
 
   // Return structured data — client saves to Convex
