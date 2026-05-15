@@ -71,11 +71,11 @@ function LoadingState({ currentStep }: { currentStep: "extracting" | "generating
       <div className="flex flex-col items-center gap-4">
         <div
           className="w-14 h-14 rounded-2xl flex items-center justify-center"
-          style={{ background: "linear-gradient(135deg, #5C6BC0, #404A93)", boxShadow: "0 8px 24px rgba(92,107,192,.35)" }}
+          style={{ background: "linear-gradient(135deg, #4255ff, #3346ee)", boxShadow: "0 8px 24px rgba(92,107,192,.35)" }}
         >
           <Loader2 size={24} className="text-white animate-spin" />
         </div>
-        <p className="text-sm font-bold text-[#5C6BC0] uppercase tracking-widest">Working on it</p>
+        <p className="text-sm font-bold text-[#4255ff] uppercase tracking-widest">Working on it</p>
         <h3 className="text-xl font-extrabold text-[#15172B] text-center">Generating your study session…</h3>
       </div>
 
@@ -84,16 +84,16 @@ function LoadingState({ currentStep }: { currentStep: "extracting" | "generating
           const isDone = i < stepIndex;
           const isActive = i === stepIndex;
           return (
-            <div key={s.key} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-[#ECEEF4]">
+            <div key={s.key} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-[#e0e3f5]">
               <div className={cn("w-7 h-7 rounded-full flex items-center justify-center shrink-0 font-bold text-xs transition-all",
-                isDone ? "bg-[#2BAA66] text-white" : isActive ? "bg-[#EEF0FB] border-2 border-[#5C6BC0] text-[#5C6BC0]" : "bg-[#ECEEF4] text-[#B6BAC9]")}>
-                {isDone ? <CheckCircle size={14} /> : isActive ? <div className="w-2 h-2 rounded-full bg-[#5C6BC0] animate-pulse" /> : i + 1}
+                isDone ? "bg-[#2BAA66] text-white" : isActive ? "bg-[#eef0ff] border-2 border-[#4255ff] text-[#4255ff]" : "bg-[#eef0ff] text-[#B6BAC9]")}>
+                {isDone ? <CheckCircle size={14} /> : isActive ? <div className="w-2 h-2 rounded-full bg-[#4255ff] animate-pulse" /> : i + 1}
               </div>
               <span className={cn("text-sm font-semibold flex-1", isDone ? "text-[#6A6F87] line-through" : isActive ? "text-[#15172B]" : "text-[#B6BAC9]")}>{s.label}</span>
               {isActive && (
                 <div className="flex gap-1">
                   {[0, 1, 2].map((d) => (
-                    <div key={d} className="w-1.5 h-1.5 rounded-full bg-[#5C6BC0]" style={{ animation: `bounce 1.2s ease-in-out infinite ${d * 0.15}s` }} />
+                    <div key={d} className="w-1.5 h-1.5 rounded-full bg-[#4255ff]" style={{ animation: `bounce 1.2s ease-in-out infinite ${d * 0.15}s` }} />
                   ))}
                 </div>
               )}
@@ -102,8 +102,8 @@ function LoadingState({ currentStep }: { currentStep: "extracting" | "generating
         })}
       </div>
 
-      <div className="w-full bg-[#ECEEF4] rounded-full h-1.5 overflow-hidden">
-        <div className="h-full rounded-full transition-all duration-700" style={{ width: `${((stepIndex + 0.5) / LOADING_STEPS.length) * 100}%`, background: "linear-gradient(90deg, #8691D3, #5C6BC0)" }} />
+      <div className="w-full bg-[#eef0ff] rounded-full h-1.5 overflow-hidden">
+        <div className="h-full rounded-full transition-all duration-700" style={{ width: `${((stepIndex + 0.5) / LOADING_STEPS.length) * 100}%`, background: "linear-gradient(90deg, #7080e8, #4255ff)" }} />
       </div>
 
       <div className="w-full rounded-2xl p-4 flex gap-3 items-center" style={{ background: "linear-gradient(135deg, #FFF7E6, #FFEFC8)", border: "1px solid #F4DC9E" }}>
@@ -167,14 +167,14 @@ function FlashcardViewer({ cards }: { cards: FlashcardResult[] }) {
     <div className="flex flex-col items-center gap-6">
       <div className="w-full flex items-center gap-3">
         <span className="text-xs text-[#6A6F87] font-medium shrink-0">{index + 1} / {deck.length}</span>
-        <div className="flex-1 bg-[#ECEEF4] rounded-full h-1.5 overflow-hidden">
-          <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: "linear-gradient(90deg, #8691D3, #5C6BC0)" }} />
+        <div className="flex-1 bg-[#eef0ff] rounded-full h-1.5 overflow-hidden">
+          <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: "linear-gradient(90deg, #7080e8, #4255ff)" }} />
         </div>
         <div className="flex gap-2 shrink-0">
-          <button onClick={shuffle} className="flex items-center gap-1 text-xs text-[#6A6F87] hover:text-[#5C6BC0] transition-colors px-2 py-1 rounded-lg hover:bg-[#EEF0FB]">
+          <button onClick={shuffle} className="flex items-center gap-1 text-xs text-[#6A6F87] hover:text-[#4255ff] transition-colors px-2 py-1 rounded-lg hover:bg-[#eef0ff]">
             <Shuffle size={13} /><span>Shuffle</span>
           </button>
-          <button onClick={reset} className="flex items-center gap-1 text-xs text-[#6A6F87] hover:text-[#5C6BC0] transition-colors px-2 py-1 rounded-lg hover:bg-[#EEF0FB]">
+          <button onClick={reset} className="flex items-center gap-1 text-xs text-[#6A6F87] hover:text-[#4255ff] transition-colors px-2 py-1 rounded-lg hover:bg-[#eef0ff]">
             <RotateCcw size={13} /><span>Reset</span>
           </button>
         </div>
@@ -182,9 +182,9 @@ function FlashcardViewer({ cards }: { cards: FlashcardResult[] }) {
 
       <div className="w-full cursor-pointer select-none" style={{ perspective: "1200px" }} onClick={() => setFlipped((f) => !f)}>
         <div className="relative w-full transition-transform duration-500" style={{ transformStyle: "preserve-3d", transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)", minHeight: "220px" }}>
-          <div className="absolute inset-0 bg-white border border-[#ECEEF4] rounded-2xl shadow-sm p-5 sm:p-7 flex flex-col justify-between" style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}>
+          <div className="absolute inset-0 bg-white border border-[#e0e3f5] rounded-2xl shadow-sm p-5 sm:p-7 flex flex-col justify-between" style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#5C6BC0] bg-[#EEF0FB] px-3 py-1 rounded-full uppercase tracking-wider">Question</span>
+              <span className="text-xs font-bold text-[#4255ff] bg-[#eef0ff] px-3 py-1 rounded-full uppercase tracking-wider">Question</span>
               <span className="text-xs text-[#B6BAC9] font-medium">Card {index + 1}</span>
             </div>
             <div className="flex-1 flex items-center justify-center py-4">
@@ -193,7 +193,7 @@ function FlashcardViewer({ cards }: { cards: FlashcardResult[] }) {
             <p className="text-xs text-center text-[#B6BAC9]">Click or press Space to reveal answer</p>
           </div>
 
-          <div className="absolute inset-0 rounded-2xl shadow-sm p-5 sm:p-7 flex flex-col justify-between" style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg)", background: "linear-gradient(135deg, #5C6BC0, #404A93)" }}>
+          <div className="absolute inset-0 rounded-2xl shadow-sm p-5 sm:p-7 flex flex-col justify-between" style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg)", background: "linear-gradient(135deg, #4255ff, #3346ee)" }}>
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-white/80 bg-white/15 px-3 py-1 rounded-full uppercase tracking-wider">Answer</span>
               <DifficultyBadge level={current.difficulty} />
@@ -207,11 +207,11 @@ function FlashcardViewer({ cards }: { cards: FlashcardResult[] }) {
       </div>
 
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="sm" onClick={goPrev} disabled={index === 0} className="gap-1.5 border-[#DCDEE7] text-[#6A6F87] disabled:opacity-40">
+        <Button variant="outline" size="sm" onClick={goPrev} disabled={index === 0} className="gap-1.5 border-[#dde0f5] text-[#6A6F87] disabled:opacity-40">
           <ChevronLeft size={15} />Previous
         </Button>
         <span className="text-sm text-[#6A6F87] tabular-nums">{index + 1} / {deck.length}</span>
-        <Button variant="outline" size="sm" onClick={goNext} disabled={index === deck.length - 1} className="gap-1.5 border-[#DCDEE7] text-[#6A6F87] disabled:opacity-40">
+        <Button variant="outline" size="sm" onClick={goNext} disabled={index === deck.length - 1} className="gap-1.5 border-[#dde0f5] text-[#6A6F87] disabled:opacity-40">
           Next<ChevronRight size={15} />
         </Button>
       </div>
@@ -283,7 +283,7 @@ function QuizViewer({ questions }: { questions: QuizResult[] }) {
             );
           })}
         </div>
-        <Button onClick={tryAgain} className="bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white">Try Again</Button>
+        <Button onClick={tryAgain} className="bg-[#4255ff] hover:bg-[#3346ee] text-white">Try Again</Button>
       </div>
     );
   }
@@ -292,22 +292,22 @@ function QuizViewer({ questions }: { questions: QuizResult[] }) {
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-3">
         <span className="text-xs text-[#6A6F87] font-medium shrink-0">Question {qIndex + 1} of {questions.length}</span>
-        <div className="flex-1 bg-[#ECEEF4] rounded-full h-1.5 overflow-hidden">
-          <div className="h-full rounded-full transition-all duration-300" style={{ width: `${((qIndex + 1) / questions.length) * 100}%`, background: "linear-gradient(90deg, #8691D3, #5C6BC0)" }} />
+        <div className="flex-1 bg-[#eef0ff] rounded-full h-1.5 overflow-hidden">
+          <div className="h-full rounded-full transition-all duration-300" style={{ width: `${((qIndex + 1) / questions.length) * 100}%`, background: "linear-gradient(90deg, #7080e8, #4255ff)" }} />
         </div>
       </div>
 
-      <div className="bg-white border border-[#ECEEF4] rounded-2xl shadow-sm p-6">
+      <div className="bg-white border border-[#e0e3f5] rounded-2xl shadow-sm p-6">
         <p className="text-base font-bold text-[#15172B] leading-relaxed mb-5">{current.question}</p>
         <div className="flex flex-col gap-3">
           {current.options.map((opt, oi) => {
             const isChosen = chosen === oi;
             const isCorrect = oi === current.correctIndex;
-            let optClass = "border border-[#DCDEE7] text-[#34384F] hover:border-[#8691D3] hover:bg-[#EEF0FB] cursor-pointer";
+            let optClass = "border border-[#dde0f5] text-[#34384F] hover:border-[#7080e8] hover:bg-[#eef0ff] cursor-pointer";
             if (hasAnswered) {
               if (isCorrect) optClass = "border border-[#2BAA66] bg-[#D4F5E5] text-[#1A7A4A] cursor-default";
               else if (isChosen) optClass = "border border-[#D9534F] bg-[#FDECEC] text-[#9B1C1C] cursor-default";
-              else optClass = "border border-[#DCDEE7] text-[#B6BAC9] cursor-default opacity-60";
+              else optClass = "border border-[#dde0f5] text-[#B6BAC9] cursor-default opacity-60";
             }
             return (
               <button key={oi} onClick={() => choose(oi)} className={cn("w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all", optClass)}>
@@ -325,7 +325,7 @@ function QuizViewer({ questions }: { questions: QuizResult[] }) {
       </div>
 
       <div className="flex justify-end">
-        <Button onClick={next} disabled={!hasAnswered} className="bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white gap-1.5 disabled:opacity-40">
+        <Button onClick={next} disabled={!hasAnswered} className="bg-[#4255ff] hover:bg-[#3346ee] text-white gap-1.5 disabled:opacity-40">
           {isLast ? "Submit" : "Next Question"}<ArrowRight size={15} />
         </Button>
       </div>
@@ -364,40 +364,40 @@ function ResultView({ result, onGenerateAnother }: { result: GenerateResult; onG
 
   return (
     <div className="w-full">
-      <div className="bg-white border border-[#ECEEF4] rounded-2xl shadow-sm p-5 sm:p-6 mb-6">
+      <div className="bg-white border border-[#e0e3f5] rounded-2xl shadow-sm p-5 sm:p-6 mb-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
-            <p className="text-xs font-bold text-[#5C6BC0] uppercase tracking-widest mb-1">Study Deck Ready</p>
+            <p className="text-xs font-bold text-[#4255ff] uppercase tracking-widest mb-1">Study Deck Ready</p>
             <h3 className="text-xl font-extrabold text-[#15172B] tracking-tight leading-snug mb-2">{result.title}</h3>
             <p className="text-[#6A6F87] text-sm leading-relaxed">{result.summary}</p>
           </div>
           <div className="flex flex-row sm:flex-col gap-2 sm:shrink-0">
             {isSignedIn ? (
-              <Button onClick={handleSave} disabled={saving} className="flex-1 sm:flex-none bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white gap-2 disabled:opacity-60">
+              <Button onClick={handleSave} disabled={saving} className="flex-1 sm:flex-none bg-[#4255ff] hover:bg-[#3346ee] text-white gap-2 disabled:opacity-60">
                 {saving ? <Loader2 size={15} className="animate-spin" /> : <BookOpen size={15} />}
                 Save to My Decks
               </Button>
             ) : (
               <SignUpButton mode="modal">
-                <Button className="flex-1 sm:flex-none w-full bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white gap-2">
+                <Button className="flex-1 sm:flex-none w-full bg-[#4255ff] hover:bg-[#3346ee] text-white gap-2">
                   <BookOpen size={15} />Sign up to save
                 </Button>
               </SignUpButton>
             )}
-            <Button variant="ghost" size="sm" onClick={onGenerateAnother} className="flex-1 sm:flex-none text-[#6A6F87] hover:text-[#5C6BC0]">
+            <Button variant="ghost" size="sm" onClick={onGenerateAnother} className="flex-1 sm:flex-none text-[#6A6F87] hover:text-[#4255ff]">
               ← Try another
             </Button>
           </div>
         </div>
 
         <div className="flex gap-2 mt-4 flex-wrap">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#EEF0FB] text-xs font-semibold text-[#5C6BC0]">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#eef0ff] text-xs font-semibold text-[#4255ff]">
             <BookOpen size={11} />{result.flashcards.length} Flashcards
           </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#EEF0FB] text-xs font-semibold text-[#5C6BC0]">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#eef0ff] text-xs font-semibold text-[#4255ff]">
             <Brain size={11} />{result.quizQuestions.length} Quiz Questions
           </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#ECEEF4] text-xs font-medium text-[#6A6F87]">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#eef0ff] text-xs font-medium text-[#6A6F87]">
             {result.sourceType === "youtube" ? <Youtube size={11} /> : <FileText size={11} />}
             {result.sourceType === "youtube" ? "YouTube" : result.sourceFileName ?? "PDF"}
           </span>
@@ -405,11 +405,11 @@ function ResultView({ result, onGenerateAnother }: { result: GenerateResult; onG
       </div>
 
       <Tabs defaultValue="flashcards">
-        <TabsList className="mb-5 bg-[#ECEEF4] p-1 rounded-xl h-auto w-full">
-          <TabsTrigger value="flashcards" className="flex-1 gap-1.5 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#5C6BC0] text-[#6A6F87] font-semibold px-3 py-2 text-sm">
+        <TabsList className="mb-5 bg-[#eef0ff] p-1 rounded-xl h-auto w-full">
+          <TabsTrigger value="flashcards" className="flex-1 gap-1.5 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#4255ff] text-[#6A6F87] font-semibold px-3 py-2 text-sm">
             <BookOpen size={14} />Flashcards ({result.flashcards.length})
           </TabsTrigger>
-          <TabsTrigger value="quiz" className="flex-1 gap-1.5 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#5C6BC0] text-[#6A6F87] font-semibold px-3 py-2 text-sm">
+          <TabsTrigger value="quiz" className="flex-1 gap-1.5 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#4255ff] text-[#6A6F87] font-semibold px-3 py-2 text-sm">
             <Brain size={14} />Quiz ({result.quizQuestions.length} Qs)
           </TabsTrigger>
         </TabsList>
@@ -515,17 +515,17 @@ function GeneratorForm({ onGenerate }: { onGenerate: (step: "extracting" | "gene
   return (
     <div className="w-full">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-4 bg-[#ECEEF4] p-1 rounded-xl h-auto w-full">
-          <TabsTrigger value="youtube" className="flex-1 gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#5C6BC0] text-[#6A6F87] font-semibold px-3 py-2.5">
+        <TabsList className="mb-4 bg-[#eef0ff] p-1 rounded-xl h-auto w-full">
+          <TabsTrigger value="youtube" className="flex-1 gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#4255ff] text-[#6A6F87] font-semibold px-3 py-2.5">
             <Youtube size={15} className="text-[#D9534F]" />YouTube URL
           </TabsTrigger>
-          <TabsTrigger value="pdf" className="flex-1 gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#5C6BC0] text-[#6A6F87] font-semibold px-3 py-2.5">
+          <TabsTrigger value="pdf" className="flex-1 gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#4255ff] text-[#6A6F87] font-semibold px-3 py-2.5">
             <FileText size={15} />Upload PDF
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="youtube">
-          <div className="bg-white rounded-2xl border border-[#ECEEF4] shadow-sm p-5">
+          <div className="bg-white rounded-2xl border border-[#e0e3f5] shadow-sm p-5">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-9 h-9 rounded-xl bg-[#FFE6E6] flex items-center justify-center shrink-0">
                 <Youtube size={18} className="text-[#D9534F]" />
@@ -539,23 +539,23 @@ function GeneratorForm({ onGenerate }: { onGenerate: (step: "extracting" | "gene
               placeholder="https://youtube.com/watch?v=..."
               value={youtubeUrl}
               onChange={(e) => setYoutubeUrl(e.target.value)}
-              className="border-[#DCDEE7] focus:border-[#8691D3] h-11 text-sm rounded-xl"
+              className="border-[#dde0f5] focus:border-[#7080e8] h-11 text-sm rounded-xl"
             />
             <div className="flex justify-between mt-2 text-xs text-[#8D92A8]">
               <span>Any public YouTube video with captions</span>
               <span>{youtubeUrl.length} / 200</span>
             </div>
-            <Button onClick={handleGenerate} disabled={!isYoutubeUrl(youtubeUrl)} className="w-full mt-4 bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white h-11 text-sm font-semibold rounded-xl gap-2 disabled:opacity-40">
+            <Button onClick={handleGenerate} disabled={!isYoutubeUrl(youtubeUrl)} className="w-full mt-4 bg-[#4255ff] hover:bg-[#3346ee] text-white h-11 text-sm font-semibold rounded-xl gap-2 disabled:opacity-40">
               Generate Flashcards <ArrowRight size={16} />
             </Button>
           </div>
         </TabsContent>
 
         <TabsContent value="pdf">
-          <div className="bg-white rounded-2xl border border-[#ECEEF4] shadow-sm p-5">
+          <div className="bg-white rounded-2xl border border-[#e0e3f5] shadow-sm p-5">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-9 h-9 rounded-xl bg-[#EEF0FB] flex items-center justify-center shrink-0">
-                <FileText size={18} className="text-[#5C6BC0]" />
+              <div className="w-9 h-9 rounded-xl bg-[#eef0ff] flex items-center justify-center shrink-0">
+                <FileText size={18} className="text-[#4255ff]" />
               </div>
               <div>
                 <div className="font-bold text-[#15172B] text-sm">From a PDF</div>
@@ -564,8 +564,8 @@ function GeneratorForm({ onGenerate }: { onGenerate: (step: "extracting" | "gene
             </div>
 
             {pdfFile ? (
-              <div className="border border-[#C5CCEC] rounded-xl p-4 bg-[#EEF0FB] flex items-center gap-3">
-                <FileText size={18} className="text-[#5C6BC0] shrink-0" />
+              <div className="border border-[#c5c9e8] rounded-xl p-4 bg-[#eef0ff] flex items-center gap-3">
+                <FileText size={18} className="text-[#4255ff] shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm text-[#15172B] truncate">{pdfFile.name}</div>
                   <div className="text-xs text-[#6A6F87]">{formatBytes(pdfFile.size)}</div>
@@ -580,20 +580,20 @@ function GeneratorForm({ onGenerate }: { onGenerate: (step: "extracting" | "gene
                 onDragLeave={() => setDragging(false)}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className={cn("border-2 border-dashed rounded-xl p-7 text-center cursor-pointer transition-all", dragging ? "border-[#5C6BC0] bg-[#EEF0FB]" : "border-[#C5CCEC] bg-gradient-to-b from-[#EEF0FB] to-[#F9FAFE] hover:border-[#8691D3]")}
+                className={cn("border-2 border-dashed rounded-xl p-7 text-center cursor-pointer transition-all", dragging ? "border-[#4255ff] bg-[#eef0ff]" : "border-[#c5c9e8] bg-gradient-to-b from-[#eef0ff] to-[#F9FAFE] hover:border-[#7080e8]")}
               >
-                <div className="w-11 h-11 rounded-xl bg-white shadow-sm flex items-center justify-center mx-auto mb-3 text-[#5C6BC0]">
+                <div className="w-11 h-11 rounded-xl bg-white shadow-sm flex items-center justify-center mx-auto mb-3 text-[#4255ff]">
                   <Upload size={20} />
                 </div>
                 <div className="text-sm font-semibold text-[#15172B]">
-                  Drop a PDF here or <span className="text-[#5C6BC0]">browse files</span>
+                  Drop a PDF here or <span className="text-[#4255ff]">browse files</span>
                 </div>
                 <div className="text-xs text-[#8D92A8] mt-1">Max 20 MB · PDF only</div>
                 <input ref={fileInputRef} type="file" accept=".pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) setPdfFile(f); }} />
               </div>
             )}
 
-            <Button onClick={handleGenerate} disabled={!pdfFile} className="w-full mt-4 bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white h-11 text-sm font-semibold rounded-xl gap-2 disabled:opacity-40">
+            <Button onClick={handleGenerate} disabled={!pdfFile} className="w-full mt-4 bg-[#4255ff] hover:bg-[#3346ee] text-white h-11 text-sm font-semibold rounded-xl gap-2 disabled:opacity-40">
               Upload &amp; Generate <ArrowRight size={16} />
             </Button>
           </div>
@@ -638,7 +638,7 @@ export default function GeneratorEmbed() {
           <h3 className="text-lg font-bold text-[#15172B]">Generation failed</h3>
           <p className="text-[#6A6F87] mt-1 text-sm leading-relaxed">{errorMsg}</p>
         </div>
-        <Button onClick={() => setStep("idle")} className="bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white">
+        <Button onClick={() => setStep("idle")} className="bg-[#4255ff] hover:bg-[#3346ee] text-white">
           Try Again
         </Button>
       </div>
