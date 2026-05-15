@@ -811,6 +811,7 @@ function GeneratorForm({ onGenerate }: { onGenerate: (step: "extracting" | "gene
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
 
   const isYoutubeUrl = (url: string) =>
     /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/|embed\/))([a-zA-Z0-9_-]{11})/.test(url);
@@ -847,16 +848,24 @@ function GeneratorForm({ onGenerate }: { onGenerate: (step: "extracting" | "gene
         onGenerate("extracting", undefined, "Please select a PDF file.");
         return;
       }
-      if (pdfFile.size > 3 * 1024 * 1024) {
-        toast.error("PDF must be under 3 MB.");
-        onGenerate("extracting", undefined, "PDF must be under 3 MB.");
+      if (pdfFile.size > 20 * 1024 * 1024) {
+        toast.error("PDF must be under 20 MB.");
+        onGenerate("extracting", undefined, "PDF must be under 20 MB.");
         return;
       }
-      const arrayBuffer = await pdfFile.arrayBuffer();
-      const pdfBase64 = btoa(
-        new Uint8Array(arrayBuffer).reduce((s, b) => s + String.fromCharCode(b), "")
-      );
-      body = { sourceType: "pdf", pdfBase64, fileName: pdfFile.name };
+
+      // Upload directly to Convex storage (bypasses Vercel request size limit)
+      const uploadUrl = await generateUploadUrl();
+      const uploadRes = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": pdfFile.type },
+        body: pdfFile,
+      });
+      if (!uploadRes.ok) {
+        throw new Error("Failed to upload PDF to storage.");
+      }
+      const { storageId } = await uploadRes.json();
+      body = { sourceType: "pdf", storageId, fileName: pdfFile.name };
     }
 
     // Kick off fetch, then immediately signal "generating" before awaiting
@@ -873,7 +882,7 @@ function GeneratorForm({ onGenerate }: { onGenerate: (step: "extracting" | "gene
       const res = await fetchPromise;
 
       if (res.status === 413) {
-        throw new Error("PDF is too large. Please use a file under 3 MB.");
+        throw new Error("PDF is too large. Please use a file under 20 MB.");
       }
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -1004,7 +1013,7 @@ function GeneratorForm({ onGenerate }: { onGenerate: (step: "extracting" | "gene
                   Drop a PDF here or{" "}
                   <span className="text-[#5C6BC0]">browse files</span>
                 </div>
-                <div className="text-xs text-[#8D92A8] mt-1">Max 3 MB · PDF only</div>
+                <div className="text-xs text-[#8D92A8] mt-1">Max 20 MB · PDF only</div>
                 <input
                   ref={fileInputRef}
                   type="file"
