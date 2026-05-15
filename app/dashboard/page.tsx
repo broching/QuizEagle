@@ -24,7 +24,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Layers, Youtube, FileText, Trash2, Plus, Brain } from "lucide-react";
+import { Layers, Video, FileText, Trash2, Plus, Brain } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 
@@ -118,7 +118,7 @@ function DeckCard({
     _id: Id<"decks">;
     title: string;
     summary: string;
-    sourceType: "pdf" | "youtube";
+    sourceType: "pdf" | "youtube" | "document" | "video";
     sourceFileName?: string;
     sourceUrl?: string;
     createdAt: number;
@@ -135,9 +135,9 @@ function DeckCard({
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
-            {deck.sourceType === "youtube" ? (
-              <div className="w-9 h-9 rounded-xl bg-[#FFE6E6] flex items-center justify-center shrink-0">
-                <Youtube size={18} className="text-[#D9534F]" />
+            {deck.sourceType === "youtube" || deck.sourceType === "video" ? (
+              <div className="w-9 h-9 rounded-xl bg-[#EEF0FB] flex items-center justify-center shrink-0">
+                <Video size={18} className="text-[#5C6BC0]" />
               </div>
             ) : (
               <div className="w-9 h-9 rounded-xl bg-[#EEF0FB] flex items-center justify-center shrink-0">
