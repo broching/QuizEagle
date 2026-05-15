@@ -187,6 +187,86 @@ function truncateToWords(text: string, maxWords: number): string {
   return words.length <= maxWords ? text : words.slice(0, maxWords).join(" ");
 }
 
+function extractJsonFromPage(html: string, marker: string): unknown | null {
+  const idx = html.indexOf(marker);
+  if (idx === -1) return null;
+  const start = html.indexOf("{", idx + marker.length);
+  if (start === -1) return null;
+
+  let depth = 0;
+  let inStr = false;
+  let esc = false;
+  for (let i = start; i < html.length; i++) {
+    const ch = html[i];
+    if (esc) { esc = false; continue; }
+    if (ch === "\\" && inStr) { esc = true; continue; }
+    if (ch === '"') { inStr = !inStr; continue; }
+    if (inStr) continue;
+    if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) {
+        try { return JSON.parse(html.slice(start, i + 1)); } catch { return null; }
+      }
+    }
+  }
+  return null;
+}
+
+async function fetchYouTubeTranscript(videoId: string): Promise<string> {
+  const pageRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      "Accept-Language": "en-US,en;q=0.9",
+      Accept:
+        "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    },
+  });
+
+  if (!pageRes.ok) throw new Error(`YouTube page fetch failed: ${pageRes.status}`);
+
+  const html = await pageRes.text();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const playerResponse = extractJsonFromPage(html, "ytInitialPlayerResponse =") as any;
+  if (!playerResponse) throw new Error("Could not parse YouTube player response");
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const captionTracks: any[] | undefined =
+    playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+
+  if (!captionTracks?.length) {
+    throw new Error("This video has no captions available. Try a video with subtitles enabled.");
+  }
+
+  // Prefer English; fall back to first available track
+  const track =
+    captionTracks.find((t) => t.languageCode === "en") ??
+    captionTracks.find((t) => (t.languageCode as string).startsWith("en")) ??
+    captionTracks[0];
+
+  const captionUrl: string = track.baseUrl;
+  const captionRes = await fetch(`${captionUrl}&fmt=json3`);
+  if (!captionRes.ok) throw new Error(`Caption fetch failed: ${captionRes.status}`);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const captionData: any = await captionRes.json();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const events: any[] = captionData?.events ?? [];
+
+  const text = events
+    .filter((e) => Array.isArray(e.segs))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .map((e) => e.segs.map((s: any) => s.utf8 ?? "").join(""))
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!text) throw new Error("No transcript text found in captions.");
+  return text;
+}
+
 export async function POST(req: NextRequest) {
   let body: {
     sourceType: "pdf" | "youtube";
@@ -228,23 +308,13 @@ export async function POST(req: NextRequest) {
       );
       if (!match) return NextResponse.json({ error: "Invalid YouTube URL" }, { status: 400 });
 
-      const { YoutubeTranscript } = await import("youtube-transcript");
-      let segments: Array<{ text: string }>;
       try {
-        segments = await YoutubeTranscript.fetchTranscript(match[1]);
-      } catch {
-        return NextResponse.json(
-          { error: "This video has no captions available. Try a video with subtitles enabled." },
-          { status: 422 }
-        );
+        text = await fetchYouTubeTranscript(match[1]);
+      } catch (err) {
+        const msg =
+          err instanceof Error ? err.message : "Could not fetch transcript from this video.";
+        return NextResponse.json({ error: msg }, { status: 422 });
       }
-      if (!segments?.length) {
-        return NextResponse.json(
-          { error: "This video has no captions available. Try a video with subtitles enabled." },
-          { status: 422 }
-        );
-      }
-      text = segments.map((s) => s.text).join(" ");
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Extraction failed";
