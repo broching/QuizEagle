@@ -33,16 +33,16 @@ export default function HeroSection() {
                                     <Button
                                         asChild
                                         size="lg">
-                                        <Link href="/dashboard">
-                                            <span className="text-nowrap">Get Started Free</span>
+                                        <Link href="/generate">
+                                            <span className="text-nowrap">Try it Free →</span>
                                         </Link>
                                     </Button>
                                     <Button
                                         asChild
                                         size="lg"
                                         variant="outline">
-                                        <Link href="/dashboard/new">
-                                            <span className="text-nowrap">Generate a Deck</span>
+                                        <Link href="/generate">
+                                            <span className="text-nowrap">See how it works</span>
                                         </Link>
                                     </Button>
                                 </div>
