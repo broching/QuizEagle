@@ -16,8 +16,39 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "Quiz Eagle — AI Flashcards & Quizzes",
-  description: "Turn any document or video into flashcards and quizzes in seconds.",
+  title: {
+    default: "Quiz Eagle — Free AI Flashcard & Quiz Generator",
+    template: "%s | Quiz Eagle",
+  },
+  description:
+    "Quiz Eagle is a free AI flashcard and quiz generator. Upload a PDF, PPTX, DOCX, or video and get flashcards + a quiz in under 30 seconds. No sign-up required.",
+  keywords: [
+    "free flashcard generator",
+    "AI flashcard generator",
+    "PDF to flashcards",
+    "free quiz generator",
+    "study flashcards online",
+    "AI study tool",
+    "flashcard maker",
+    "free flashcards",
+  ],
+  authors: [{ name: "Quiz Eagle" }],
+  metadataBase: new URL("https://quizeagle.com"),
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "Quiz Eagle",
+    title: "Quiz Eagle — Free AI Flashcard & Quiz Generator",
+    description:
+      "Turn any PDF, PowerPoint, Word doc, or video into flashcards and a quiz in seconds. 100% free, no sign-up needed.",
+    url: "https://quizeagle.com",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Quiz Eagle — Free AI Flashcard & Quiz Generator",
+    description:
+      "Turn any document or video into flashcards & a quiz in seconds. Free, no sign-up needed.",
+  },
 };
 
 export default function RootLayout({
