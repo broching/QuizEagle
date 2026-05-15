@@ -16,6 +16,7 @@ import { useTheme } from "next-themes"
 const menuItems = [
     { name: 'Features', href: '#' },
     { name: 'Pricing', href: '#' },
+    { name: 'Blog', href: '/blog' },
     { name: 'FAQ', href: '#' },
 ]
 

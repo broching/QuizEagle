@@ -23,12 +23,12 @@ export default function HeroSection() {
                         className="text-center font-black leading-tight tracking-tight mb-2"
                         style={{ fontSize: 'clamp(1.75rem, 5vw, 2.5rem)', color: '#1a1d3b' }}
                     >
-                        Turn any document or video into{' '}
-                        <span style={{ color: '#4255ff' }}>flashcards & a quiz</span>
+                        Free AI Flashcard &amp;{' '}
+                        <span style={{ color: '#4255ff' }}>Quiz Generator</span>
                     </h1>
 
                     <p className="text-center text-sm font-medium mb-7" style={{ color: '#6b6f9a' }}>
-                        Upload a PDF, PPTX, DOCX, or video — ready in under 30 seconds
+                        Turn any PDF, PowerPoint, Word doc, or video into flashcards and a quiz in seconds — no sign-up needed.
                     </p>
 
                     {/* Widget card — the main focus */}
