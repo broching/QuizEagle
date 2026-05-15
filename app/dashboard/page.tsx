@@ -24,7 +24,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Layers, Video, FileText, Trash2, Plus, Brain } from "lucide-react";
+import { SharePanel } from "@/components/share-panel";
+import { Layers, Video, FileText, Trash2, Plus, Brain, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 
@@ -124,11 +125,14 @@ function DeckCard({
     createdAt: number;
     flashcardCount: number;
     quizCount: number;
+    isShared?: boolean;
+    shareToken?: string;
   };
   onDelete: (id: Id<"decks">) => void;
   deleting: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   return (
     <Card className="border border-[#ECEEF4] shadow-sm hover:shadow-md transition-shadow bg-white rounded-2xl flex flex-col">
@@ -169,6 +173,15 @@ function DeckCard({
           >
             {deck.quizCount} quiz Qs
           </Badge>
+          {deck.isShared && (
+            <Badge
+              variant="secondary"
+              className="gap-1 text-xs bg-[#EEF0FB] text-[#5C6BC0] border-0 font-semibold"
+            >
+              <Share2 size={10} />
+              Shared
+            </Badge>
+          )}
         </div>
       </CardContent>
 
@@ -177,7 +190,17 @@ function DeckCard({
           {formatDistanceToNow(deck.createdAt)}
         </span>
         <div className="flex gap-2">
-          <Dialog open={open} onOpenChange={setOpen}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShareOpen(true)}
+            className="text-[#8D92A8] hover:text-[#5C6BC0] hover:bg-[#EEF0FB] h-8 w-8 p-0"
+            title="Share deck"
+          >
+            <Share2 size={14} />
+          </Button>
+
+          <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
             <DialogTrigger asChild>
               <Button
                 variant="ghost"
@@ -197,7 +220,7 @@ function DeckCard({
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>
+                <Button variant="outline" onClick={() => setDeleteOpen(false)}>
                   Cancel
                 </Button>
                 <Button
@@ -205,7 +228,7 @@ function DeckCard({
                   disabled={deleting}
                   onClick={async () => {
                     await onDelete(deck._id);
-                    setOpen(false);
+                    setDeleteOpen(false);
                   }}
                 >
                   {deleting ? "Deleting…" : "Delete"}
@@ -224,6 +247,14 @@ function DeckCard({
           </Link>
         </div>
       </CardFooter>
+
+      <SharePanel
+        deckId={deck._id}
+        isShared={deck.isShared}
+        shareToken={deck.shareToken}
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+      />
     </Card>
   );
 }

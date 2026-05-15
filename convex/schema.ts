@@ -24,7 +24,10 @@ export default defineSchema({
       createdAt: v.number(),
       flashcardCount: v.number(),
       quizCount: v.number(),
-    }).index("by_user", ["userId"]),
+      isShared: v.optional(v.boolean()),
+      shareToken: v.optional(v.string()),
+    }).index("by_user", ["userId"])
+      .index("by_shareToken", ["shareToken"]),
 
     flashcards: defineTable({
       deckId: v.id("decks"),
