@@ -9,12 +9,12 @@ export default function FAQs() {
                             Frequently <br className="hidden lg:block" /> Asked <br className="hidden lg:block" />
                             Questions
                         </h2>
-                        <p className="text-muted-foreground">Can&apos;t find an answer? <a href="mailto:support@smartstudy.app" className="text-primary underline underline-offset-4">Email us</a>.</p>
+                        <p className="text-muted-foreground">Can&apos;t find an answer? <a href="mailto:support@quizeagle.app" className="text-primary underline underline-offset-4">Email us</a>.</p>
                     </div>
 
                     <div className="divide-y divide-dashed sm:mx-auto sm:max-w-lg lg:mx-0">
                         <div className="pb-6">
-                            <h3 className="font-semibold">Is SmartStudy really free to use?</h3>
+                            <h3 className="font-semibold">Is Quiz Eagle really free to use?</h3>
                             <p className="text-muted-foreground mt-4 text-sm leading-relaxed">
                                 Yes — you can generate flashcard decks and quizzes without signing up, completely free. Creating an account lets you save decks to your dashboard and track your quiz progress over time. We offer paid plans for power users who need higher limits.
                             </p>
@@ -22,13 +22,13 @@ export default function FAQs() {
                         <div className="py-6">
                             <h3 className="font-semibold">What file types and sizes are supported?</h3>
                             <p className="text-muted-foreground mt-4 text-sm leading-relaxed">
-                                SmartStudy supports PDF files up to 20 MB. Text must be selectable (not a scanned image). For YouTube, any public video with captions enabled works — just paste the URL. We support standard, Shorts, and embed formats.
+                                Quiz Eagle supports PDF, PPTX, and DOCX files up to 20 MB, and video/audio files (MP4, MOV, MP3, WAV, M4A) up to 25 MB. For documents, text must be selectable — scanned images won't work. Videos are transcribed automatically using AI, no captions required.
                             </p>
                         </div>
                         <div className="py-6">
                             <h3 className="font-semibold">How accurate are the AI-generated flashcards?</h3>
                             <p className="text-muted-foreground mt-4 text-sm leading-relaxed">
-                                SmartStudy uses Google&apos;s Gemini model to identify key concepts, definitions, and facts from your content. Accuracy is high for well-structured academic material. We always recommend reviewing the generated deck before your exam to catch any gaps.
+                                Quiz Eagle uses Google&apos;s Gemini model to identify key concepts, definitions, and facts from your content. Accuracy is high for well-structured academic material. We always recommend reviewing the generated deck before your exam to catch any gaps.
                             </p>
                         </div>
                         <div className="py-6">

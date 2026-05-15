@@ -15,8 +15,8 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "SmartStudy — AI Flashcards & Quizzes",
-  description: "Turn any PDF or YouTube video into flashcards and quizzes in seconds.",
+  title: "Quiz Eagle — AI Flashcards & Quizzes",
+  description: "Turn any document or video into flashcards and quizzes in seconds.",
 };
 
 export default function RootLayout({

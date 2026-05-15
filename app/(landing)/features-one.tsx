@@ -1,11 +1,11 @@
 import { Card, CardContent } from '@/components/ui/card'
-import { Zap, BookOpen, Brain, FileText, Youtube, BarChart3 } from 'lucide-react'
+import { Zap, BookOpen, Brain, FileText, Video, BarChart3 } from 'lucide-react'
 
 const features = [
     {
         icon: Zap,
         title: "AI in Under 30 Seconds",
-        description: "Paste a YouTube link or upload a PDF and watch SmartStudy extract key concepts, definitions, and facts — generating a full study deck before you can make a coffee.",
+        description: "Upload a document or video and watch Quiz Eagle extract key concepts, definitions, and facts — generating a full study deck before you can make a coffee.",
         color: "bg-yellow-50 text-yellow-600",
     },
     {
@@ -22,15 +22,15 @@ const features = [
     },
     {
         icon: FileText,
-        title: "PDF Support up to 20 MB",
-        description: "Upload textbook chapters, lecture slides, lab reports — anything up to 20 MB. SmartStudy extracts clean text even from dense academic PDFs.",
+        title: "PDF, PPTX & DOCX Support",
+        description: "Upload textbook chapters, lecture slides, or Word notes — anything up to 20 MB. Quiz Eagle extracts clean text even from dense academic documents.",
         color: "bg-indigo-50 text-indigo-600",
     },
     {
-        icon: Youtube,
-        title: "YouTube Transcripts",
-        description: "Turn any lecture video, documentary, or tutorial into a study deck. SmartStudy reads the captions so you don't have to take notes.",
-        color: "bg-red-50 text-red-600",
+        icon: Video,
+        title: "Video & Audio Transcription",
+        description: "Turn any lecture recording, documentary, or tutorial into a study deck. Upload MP4, MOV, MP3, or WAV files up to 25 MB — no captions needed.",
+        color: "bg-pink-50 text-pink-600",
     },
     {
         icon: BarChart3,
@@ -48,7 +48,7 @@ export default function FeaturesOne() {
                     <p className="text-sm font-bold text-primary uppercase tracking-widest mb-3">How it works</p>
                     <h2 className="text-4xl font-bold tracking-tight text-foreground">Everything you need to study smarter</h2>
                     <p className="text-muted-foreground mt-4 text-lg max-w-2xl mx-auto">
-                        SmartStudy turns passive reading and watching into active recall — the most effective study method proven by cognitive science.
+                        Quiz Eagle turns passive reading and watching into active recall — the most effective study method proven by cognitive science.
                     </p>
                 </div>
 
