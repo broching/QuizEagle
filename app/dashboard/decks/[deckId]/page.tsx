@@ -44,6 +44,15 @@ export default function DeckPage({
     );
   }
 
+  if (data === null) {
+    return (
+      <div className="max-w-4xl mx-auto px-6 py-16 text-center">
+        <h2 className="text-xl font-bold text-[#15172B]">Deck not found</h2>
+        <p className="text-[#6A6F87] mt-2">This deck may have been deleted or you don&apos;t have access.</p>
+      </div>
+    );
+  }
+
   const { deck, flashcards, quizQuestions } = data;
 
   return (
