@@ -349,7 +349,7 @@ function FlashcardViewer({ cards }: { cards: FlashcardResult[] }) {
         >
           {/* Front face */}
           <div
-            className="absolute inset-0 bg-white border border-[#ECEEF4] rounded-2xl shadow-sm p-8 flex flex-col justify-between"
+            className="absolute inset-0 bg-white border border-[#ECEEF4] rounded-2xl shadow-sm p-5 sm:p-8 flex flex-col justify-between"
             style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
           >
             <div className="flex items-center justify-between">
@@ -372,7 +372,7 @@ function FlashcardViewer({ cards }: { cards: FlashcardResult[] }) {
 
           {/* Back face */}
           <div
-            className="absolute inset-0 rounded-2xl shadow-sm p-8 flex flex-col justify-between"
+            className="absolute inset-0 rounded-2xl shadow-sm p-5 sm:p-8 flex flex-col justify-between"
             style={{
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
@@ -705,11 +705,11 @@ function ResultView({
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-10">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
       {/* Header */}
-      <div className="bg-white border border-[#ECEEF4] rounded-2xl shadow-sm p-7 mb-8">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="flex-1 min-w-0">
+      <div className="bg-white border border-[#ECEEF4] rounded-2xl shadow-sm p-5 sm:p-7 mb-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
             <p className="text-xs font-bold text-[#5C6BC0] uppercase tracking-widest mb-1">
               Study Deck Ready
             </p>
@@ -718,12 +718,12 @@ function ResultView({
             </h1>
             <p className="text-[#6A6F87] text-sm leading-relaxed">{result.summary}</p>
           </div>
-          <div className="flex flex-col gap-2 shrink-0">
+          <div className="flex flex-row sm:flex-col gap-2 sm:shrink-0">
             {isSignedIn ? (
               <Button
                 onClick={handleSave}
                 disabled={saving}
-                className="bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white gap-2 disabled:opacity-60"
+                className="flex-1 sm:flex-none bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white gap-2 disabled:opacity-60"
               >
                 {saving ? (
                   <Loader2 size={15} className="animate-spin" />
@@ -734,7 +734,7 @@ function ResultView({
               </Button>
             ) : (
               <SignUpButton mode="modal">
-                <Button className="bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white gap-2">
+                <Button className="flex-1 sm:flex-none w-full bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white gap-2">
                   <BookOpen size={15} />
                   Sign up to save
                 </Button>
@@ -744,7 +744,7 @@ function ResultView({
               variant="ghost"
               size="sm"
               onClick={onGenerateAnother}
-              className="text-[#6A6F87] hover:text-[#5C6BC0]"
+              className="flex-1 sm:flex-none text-[#6A6F87] hover:text-[#5C6BC0]"
             >
               ← Generate another
             </Button>
@@ -774,20 +774,20 @@ function ResultView({
 
       {/* Tabs */}
       <Tabs defaultValue="flashcards">
-        <TabsList className="mb-6 bg-[#ECEEF4] p-1 rounded-xl h-auto">
+        <TabsList className="mb-6 bg-[#ECEEF4] p-1 rounded-xl h-auto w-full">
           <TabsTrigger
             value="flashcards"
-            className="gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#5C6BC0] text-[#6A6F87] font-semibold px-5 py-2.5"
+            className="flex-1 gap-1.5 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#5C6BC0] text-[#6A6F87] font-semibold px-3 py-2 sm:px-5 sm:py-2.5 text-sm"
           >
-            <BookOpen size={15} />
-            Flashcards ({result.flashcards.length})
+            <BookOpen size={14} />
+            <span className="hidden xs:inline">Flashcards </span>({result.flashcards.length})
           </TabsTrigger>
           <TabsTrigger
             value="quiz"
-            className="gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#5C6BC0] text-[#6A6F87] font-semibold px-5 py-2.5"
+            className="flex-1 gap-1.5 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#5C6BC0] text-[#6A6F87] font-semibold px-3 py-2 sm:px-5 sm:py-2.5 text-sm"
           >
-            <Brain size={15} />
-            Quiz ({result.quizQuestions.length} Qs)
+            <Brain size={14} />
+            <span className="hidden xs:inline">Quiz </span>({result.quizQuestions.length} Qs)
           </TabsTrigger>
         </TabsList>
 
@@ -891,7 +891,7 @@ function GeneratorForm({ onGenerate }: { onGenerate: (step: "extracting" | "gene
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-10">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
       <div className="mb-8">
         <p className="text-xs font-bold text-[#5C6BC0] uppercase tracking-widest mb-1">
           Free Generator
@@ -905,17 +905,17 @@ function GeneratorForm({ onGenerate }: { onGenerate: (step: "extracting" | "gene
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6 bg-[#ECEEF4] p-1 rounded-xl h-auto">
+        <TabsList className="mb-6 bg-[#ECEEF4] p-1 rounded-xl h-auto w-full">
           <TabsTrigger
             value="youtube"
-            className="gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#5C6BC0] text-[#6A6F87] font-semibold px-5 py-2.5"
+            className="flex-1 gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#5C6BC0] text-[#6A6F87] font-semibold px-3 py-2.5 sm:px-5"
           >
             <Youtube size={16} className="text-[#D9534F]" />
             YouTube URL
           </TabsTrigger>
           <TabsTrigger
             value="pdf"
-            className="gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#5C6BC0] text-[#6A6F87] font-semibold px-5 py-2.5"
+            className="flex-1 gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#5C6BC0] text-[#6A6F87] font-semibold px-3 py-2.5 sm:px-5"
           >
             <FileText size={16} />
             Upload PDF
@@ -923,7 +923,7 @@ function GeneratorForm({ onGenerate }: { onGenerate: (step: "extracting" | "gene
         </TabsList>
 
         <TabsContent value="youtube">
-          <div className="bg-white rounded-2xl border border-[#ECEEF4] shadow-sm p-7">
+          <div className="bg-white rounded-2xl border border-[#ECEEF4] shadow-sm p-5 sm:p-7">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-10 h-10 rounded-xl bg-[#FFE6E6] flex items-center justify-center shrink-0">
                 <Youtube size={22} className="text-[#D9534F]" />
@@ -954,7 +954,7 @@ function GeneratorForm({ onGenerate }: { onGenerate: (step: "extracting" | "gene
         </TabsContent>
 
         <TabsContent value="pdf">
-          <div className="bg-white rounded-2xl border border-[#ECEEF4] shadow-sm p-7">
+          <div className="bg-white rounded-2xl border border-[#ECEEF4] shadow-sm p-5 sm:p-7">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-10 h-10 rounded-xl bg-[#EEF0FB] flex items-center justify-center shrink-0">
                 <FileText size={20} className="text-[#5C6BC0]" />
