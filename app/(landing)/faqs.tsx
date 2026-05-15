@@ -9,7 +9,7 @@ export default function FAQs() {
                             Frequently <br className="hidden lg:block" /> Asked <br className="hidden lg:block" />
                             Questions
                         </h2>
-                        <p className="text-muted-foreground">Can&apos;t find an answer? <a href="mailto:support@quizeagle.app" className="text-primary underline underline-offset-4">Email us</a>.</p>
+                        <p className="text-muted-foreground">Can&apos;t find an answer? <a href="mailto:support@quizeagle.com" className="text-primary underline underline-offset-4">Email us</a>.</p>
                     </div>
 
                     <div className="divide-y divide-dashed sm:mx-auto sm:max-w-lg lg:mx-0">

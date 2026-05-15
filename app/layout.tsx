@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     "free flashcards",
   ],
   authors: [{ name: "Quiz Eagle" }],
-  metadataBase: new URL("https://quizeagle.app"),
+  metadataBase: new URL("https://quizeagle.com"),
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     title: "Quiz Eagle — Free AI Flashcard & Quiz Generator",
     description:
       "Turn any PDF, PowerPoint, Word doc, or video into flashcards and a quiz in seconds. 100% free, no sign-up needed.",
-    url: "https://quizeagle.app",
+    url: "https://quizeagle.com",
   },
   twitter: {
     card: "summary_large_image",

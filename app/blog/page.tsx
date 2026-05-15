@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "Blog — Study Tips & Flashcard Guides",
   description:
     "Guides on how to study effectively with flashcards, convert PDFs and videos to study decks, and get the most out of AI study tools.",
-  alternates: { canonical: "https://quizeagle.app/blog" },
+  alternates: { canonical: "https://quizeagle.com/blog" },
 };
 
 function formatDate(dateStr: string) {

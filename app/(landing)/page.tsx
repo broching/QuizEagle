@@ -11,14 +11,14 @@ export const metadata: Metadata = {
   title: "Free AI Flashcard & Quiz Generator — Quiz Eagle",
   description:
     "The free AI flashcard generator that turns any PDF, PPTX, DOCX, or video into study flashcards and a quiz in under 30 seconds. No sign-up required.",
-  alternates: { canonical: "https://quizeagle.app" },
+  alternates: { canonical: "https://quizeagle.com" },
 };
 
 const webAppSchema = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
   name: "Quiz Eagle",
-  url: "https://quizeagle.app",
+  url: "https://quizeagle.com",
   description:
     "Free AI flashcard and quiz generator. Upload a PDF, PPTX, DOCX, or video and get flashcards + a quiz in under 30 seconds.",
   applicationCategory: "EducationApplication",
@@ -30,8 +30,8 @@ const orgSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
   name: "Quiz Eagle",
-  url: "https://quizeagle.app",
-  logo: "https://quizeagle.app/download.svg",
+  url: "https://quizeagle.com",
+  logo: "https://quizeagle.com/download.svg",
 };
 
 const faqSchema = {

@@ -22,11 +22,11 @@ export async function generateMetadata({
   return {
     title: post.title,
     description: post.description,
-    alternates: { canonical: `https://quizeagle.app/blog/${slug}` },
+    alternates: { canonical: `https://quizeagle.com/blog/${slug}` },
     openGraph: {
       title: post.title,
       description: post.description,
-      url: `https://quizeagle.app/blog/${slug}`,
+      url: `https://quizeagle.com/blog/${slug}`,
       type: "article",
     },
   };
