@@ -5,7 +5,7 @@ export const createDeck = mutation({
   args: {
     title: v.string(),
     summary: v.string(),
-    sourceType: v.union(v.literal("pdf"), v.literal("youtube")),
+    sourceType: v.union(v.literal("pdf"), v.literal("youtube"), v.literal("document"), v.literal("video")),
     sourceUrl: v.optional(v.string()),
     sourceFileName: v.optional(v.string()),
     flashcards: v.array(

@@ -8,11 +8,10 @@ import { useAuth } from "@clerk/nextjs";
 import { SignUpButton } from "@clerk/nextjs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
-  Youtube,
   FileText,
+  Video,
   Upload,
   ArrowRight,
   X,
@@ -47,8 +46,7 @@ type QuizResult = {
 type GenerateResult = {
   title: string;
   summary: string;
-  sourceType: "pdf" | "youtube";
-  sourceUrl?: string;
+  sourceType: "document" | "video";
   sourceFileName?: string;
   flashcards: FlashcardResult[];
   quizQuestions: QuizResult[];
@@ -342,7 +340,6 @@ function ResultView({ result, onGenerateAnother }: { result: GenerateResult; onG
   const [saving, setSaving] = useState(false);
   const [savedDeckId, setSavedDeckId] = useState<string | null>(null);
 
-  // Auto-save immediately when a signed-in user sees results
   useEffect(() => {
     if (isSignedIn && !savedDeckId) {
       autoSave();
@@ -357,7 +354,6 @@ function ResultView({ result, onGenerateAnother }: { result: GenerateResult; onG
         title: result.title,
         summary: result.summary,
         sourceType: result.sourceType,
-        sourceUrl: result.sourceUrl,
         sourceFileName: result.sourceFileName,
         flashcards: result.flashcards,
         quizQuestions: result.quizQuestions,
@@ -420,8 +416,8 @@ function ResultView({ result, onGenerateAnother }: { result: GenerateResult; onG
             <Brain size={11} />{result.quizQuestions.length} Quiz Questions
           </span>
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#eef0ff] text-xs font-medium text-[#6A6F87]">
-            {result.sourceType === "youtube" ? <Youtube size={11} /> : <FileText size={11} />}
-            {result.sourceType === "youtube" ? "YouTube" : result.sourceFileName ?? "PDF"}
+            {result.sourceType === "video" ? <Video size={11} /> : <FileText size={11} />}
+            {result.sourceType === "video" ? "Video" : result.sourceFileName ?? "Document"}
           </span>
         </div>
       </div>
@@ -444,23 +440,43 @@ function ResultView({ result, onGenerateAnother }: { result: GenerateResult; onG
 
 // ─── Generator form ───────────────────────────────────────────────────────────
 
+const VALID_DOC_EXTS = ["pdf", "pptx", "ppt", "docx", "doc"];
+const VALID_VIDEO_EXTS = ["mp4", "webm", "m4a", "wav", "mp3", "ogg", "mov"];
+
+function isValidDoc(file: File) {
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  return VALID_DOC_EXTS.includes(ext);
+}
+
+function isValidVideo(file: File) {
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  return VALID_VIDEO_EXTS.includes(ext);
+}
+
 function GeneratorForm({ onGenerate }: { onGenerate: (step: "extracting" | "generating", result?: GenerateResult, error?: string) => void }) {
-  const [activeTab, setActiveTab] = useState("youtube");
-  const [youtubeUrl, setYoutubeUrl] = useState("");
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [dragging, setDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeTab, setActiveTab] = useState("document");
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [docDragging, setDocDragging] = useState(false);
+  const [videoDragging, setVideoDragging] = useState(false);
+  const docInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
 
-  const isYoutubeUrl = (url: string) =>
-    /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/|embed\/))([a-zA-Z0-9_-]{11})/.test(url);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDocDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    setDragging(false);
+    setDocDragging(false);
     const file = e.dataTransfer.files[0];
-    if (file?.type === "application/pdf") setPdfFile(file);
-    else toast.error("Only PDF files are accepted.");
+    if (file && isValidDoc(file)) setDocFile(file);
+    else toast.error("Please upload a PDF, PPTX, or DOCX file.");
+  }, []);
+
+  const handleVideoDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setVideoDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file && isValidVideo(file)) setVideoFile(file);
+    else toast.error("Please upload a video or audio file (MP4, MOV, MP3, etc.).");
   }, []);
 
   function formatBytes(bytes: number) {
@@ -468,40 +484,62 @@ function GeneratorForm({ onGenerate }: { onGenerate: (step: "extracting" | "gene
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
+  async function uploadToConvex(file: File): Promise<string> {
+    const uploadUrl = await generateUploadUrl();
+    const uploadRes = await fetch(uploadUrl, {
+      method: "POST",
+      headers: { "Content-Type": file.type || "application/octet-stream" },
+      body: file,
+    });
+    if (!uploadRes.ok) throw new Error("Failed to upload file to storage.");
+    const { storageId } = await uploadRes.json();
+    return storageId as string;
+  }
+
   async function handleGenerate() {
     onGenerate("extracting");
 
     let body: Record<string, unknown>;
 
-    if (activeTab === "youtube") {
-      if (!isYoutubeUrl(youtubeUrl)) {
-        toast.error("Please enter a valid YouTube URL.");
-        onGenerate("extracting", undefined, "Please enter a valid YouTube URL.");
+    if (activeTab === "document") {
+      if (!docFile) {
+        toast.error("Please select a document.");
+        onGenerate("extracting", undefined, "Please select a document.");
         return;
       }
-      body = { sourceType: "youtube", youtubeUrl };
-    } else {
-      if (!pdfFile) {
-        toast.error("Please select a PDF file.");
-        onGenerate("extracting", undefined, "Please select a PDF file.");
+      if (docFile.size > 20 * 1024 * 1024) {
+        toast.error("Document must be under 20 MB.");
+        onGenerate("extracting", undefined, "Document must be under 20 MB.");
         return;
       }
-      if (pdfFile.size > 20 * 1024 * 1024) {
-        toast.error("PDF must be under 20 MB.");
-        onGenerate("extracting", undefined, "PDF must be under 20 MB.");
-        return;
-      }
-
       try {
-        const uploadUrl = await generateUploadUrl();
-        const uploadRes = await fetch(uploadUrl, {
-          method: "POST",
-          headers: { "Content-Type": pdfFile.type },
-          body: pdfFile,
-        });
-        if (!uploadRes.ok) throw new Error("Failed to upload PDF to storage.");
-        const { storageId } = await uploadRes.json();
-        body = { sourceType: "pdf", storageId, fileName: pdfFile.name };
+        const storageId = await uploadToConvex(docFile);
+        body = { sourceType: "document", storageId, fileName: docFile.name };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Upload failed.";
+        toast.error(msg);
+        onGenerate("extracting", undefined, msg);
+        return;
+      }
+    } else {
+      if (!videoFile) {
+        toast.error("Please select a video or audio file.");
+        onGenerate("extracting", undefined, "Please select a video or audio file.");
+        return;
+      }
+      if (videoFile.size > 25 * 1024 * 1024) {
+        toast.error("Video must be under 25 MB.");
+        onGenerate("extracting", undefined, "Video must be under 25 MB.");
+        return;
+      }
+      try {
+        const storageId = await uploadToConvex(videoFile);
+        body = {
+          sourceType: "video",
+          storageId,
+          fileName: videoFile.name,
+          mimeType: videoFile.type || "video/mp4",
+        };
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Upload failed.";
         toast.error(msg);
@@ -520,7 +558,7 @@ function GeneratorForm({ onGenerate }: { onGenerate: (step: "extracting" | "gene
 
     try {
       const res = await fetchPromise;
-      if (res.status === 413) throw new Error("PDF is too large. Please use a file under 20 MB.");
+      if (res.status === 413) throw new Error("File is too large. Please use a smaller file.");
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error ?? `Server error ${res.status}`);
@@ -538,85 +576,126 @@ function GeneratorForm({ onGenerate }: { onGenerate: (step: "extracting" | "gene
     <div className="w-full">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4 bg-[#eef0ff] p-1 rounded-xl h-auto w-full">
-          <TabsTrigger value="youtube" className="flex-1 gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#4255ff] text-[#6A6F87] font-semibold px-3 py-2.5">
-            <Youtube size={15} className="text-[#D9534F]" />YouTube URL
+          <TabsTrigger value="document" className="flex-1 gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#4255ff] text-[#6A6F87] font-semibold px-3 py-2.5">
+            <FileText size={15} />Document
           </TabsTrigger>
-          <TabsTrigger value="pdf" className="flex-1 gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#4255ff] text-[#6A6F87] font-semibold px-3 py-2.5">
-            <FileText size={15} />Upload PDF
+          <TabsTrigger value="video" className="flex-1 gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#4255ff] text-[#6A6F87] font-semibold px-3 py-2.5">
+            <Video size={15} />Video
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="youtube">
-          <div className="bg-white rounded-2xl border border-[#e0e3f5] shadow-sm p-5">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-9 h-9 rounded-xl bg-[#FFE6E6] flex items-center justify-center shrink-0">
-                <Youtube size={18} className="text-[#D9534F]" />
-              </div>
-              <div>
-                <div className="font-bold text-[#15172B] text-sm">From a YouTube video</div>
-                <div className="text-xs text-[#6A6F87]">Lecture, documentary, or tutorial</div>
-              </div>
-            </div>
-            <Input
-              placeholder="https://youtube.com/watch?v=..."
-              value={youtubeUrl}
-              onChange={(e) => setYoutubeUrl(e.target.value)}
-              className="border-[#dde0f5] focus:border-[#7080e8] h-11 text-sm rounded-xl"
-            />
-            <div className="flex justify-between mt-2 text-xs text-[#8D92A8]">
-              <span>Any public YouTube video with captions</span>
-              <span>{youtubeUrl.length} / 200</span>
-            </div>
-            <Button onClick={handleGenerate} disabled={!isYoutubeUrl(youtubeUrl)} className="w-full mt-4 bg-[#4255ff] hover:bg-[#3346ee] text-white h-11 text-sm font-semibold rounded-xl gap-2 disabled:opacity-40">
-              Generate Flashcards <ArrowRight size={16} />
-            </Button>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="pdf">
+        <TabsContent value="document">
           <div className="bg-white rounded-2xl border border-[#e0e3f5] shadow-sm p-5">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-9 h-9 rounded-xl bg-[#eef0ff] flex items-center justify-center shrink-0">
                 <FileText size={18} className="text-[#4255ff]" />
               </div>
               <div>
-                <div className="font-bold text-[#15172B] text-sm">From a PDF</div>
-                <div className="text-xs text-[#6A6F87]">Textbook chapter, slides, or notes</div>
+                <div className="font-bold text-[#15172B] text-sm">From a document</div>
+                <div className="text-xs text-[#6A6F87]">PDF, PowerPoint, or Word file</div>
               </div>
             </div>
 
-            {pdfFile ? (
+            {docFile ? (
               <div className="border border-[#c5c9e8] rounded-xl p-4 bg-[#eef0ff] flex items-center gap-3">
                 <FileText size={18} className="text-[#4255ff] shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm text-[#15172B] truncate">{pdfFile.name}</div>
-                  <div className="text-xs text-[#6A6F87]">{formatBytes(pdfFile.size)}</div>
+                  <div className="font-semibold text-sm text-[#15172B] truncate">{docFile.name}</div>
+                  <div className="text-xs text-[#6A6F87]">{formatBytes(docFile.size)}</div>
                 </div>
-                <button onClick={() => setPdfFile(null)} className="text-[#8D92A8] hover:text-[#D9534F]">
+                <button onClick={() => setDocFile(null)} className="text-[#8D92A8] hover:text-[#D9534F]">
                   <X size={15} />
                 </button>
               </div>
             ) : (
               <div
-                onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-                onDragLeave={() => setDragging(false)}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-                className={cn("border-2 border-dashed rounded-xl p-7 text-center cursor-pointer transition-all", dragging ? "border-[#4255ff] bg-[#eef0ff]" : "border-[#c5c9e8] bg-gradient-to-b from-[#eef0ff] to-[#F9FAFE] hover:border-[#7080e8]")}
+                onDragOver={(e) => { e.preventDefault(); setDocDragging(true); }}
+                onDragLeave={() => setDocDragging(false)}
+                onDrop={handleDocDrop}
+                onClick={() => docInputRef.current?.click()}
+                className={cn("border-2 border-dashed rounded-xl p-7 text-center cursor-pointer transition-all", docDragging ? "border-[#4255ff] bg-[#eef0ff]" : "border-[#c5c9e8] bg-gradient-to-b from-[#eef0ff] to-[#F9FAFE] hover:border-[#7080e8]")}
               >
                 <div className="w-11 h-11 rounded-xl bg-white shadow-sm flex items-center justify-center mx-auto mb-3 text-[#4255ff]">
                   <Upload size={20} />
                 </div>
                 <div className="text-sm font-semibold text-[#15172B]">
-                  Drop a PDF here or <span className="text-[#4255ff]">browse files</span>
+                  Drop a file here or <span className="text-[#4255ff]">browse</span>
                 </div>
-                <div className="text-xs text-[#8D92A8] mt-1">Max 20 MB · PDF only</div>
-                <input ref={fileInputRef} type="file" accept=".pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) setPdfFile(f); }} />
+                <div className="text-xs text-[#8D92A8] mt-1">PDF, PPTX, DOCX &nbsp;·&nbsp; Max 20 MB</div>
+                <input
+                  ref={docInputRef}
+                  type="file"
+                  accept=".pdf,.pptx,.ppt,.docx,.doc"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f && isValidDoc(f)) setDocFile(f);
+                    else if (f) toast.error("Please upload a PDF, PPTX, or DOCX file.");
+                  }}
+                />
               </div>
             )}
 
-            <Button onClick={handleGenerate} disabled={!pdfFile} className="w-full mt-4 bg-[#4255ff] hover:bg-[#3346ee] text-white h-11 text-sm font-semibold rounded-xl gap-2 disabled:opacity-40">
+            <Button onClick={handleGenerate} disabled={!docFile} className="w-full mt-4 bg-[#4255ff] hover:bg-[#3346ee] text-white h-11 text-sm font-semibold rounded-xl gap-2 disabled:opacity-40">
               Upload &amp; Generate <ArrowRight size={16} />
+            </Button>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="video">
+          <div className="bg-white rounded-2xl border border-[#e0e3f5] shadow-sm p-5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-9 h-9 rounded-xl bg-[#eef0ff] flex items-center justify-center shrink-0">
+                <Video size={18} className="text-[#4255ff]" />
+              </div>
+              <div>
+                <div className="font-bold text-[#15172B] text-sm">From a video or audio file</div>
+                <div className="text-xs text-[#6A6F87]">Lecture, tutorial, or recorded class</div>
+              </div>
+            </div>
+
+            {videoFile ? (
+              <div className="border border-[#c5c9e8] rounded-xl p-4 bg-[#eef0ff] flex items-center gap-3">
+                <Video size={18} className="text-[#4255ff] shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm text-[#15172B] truncate">{videoFile.name}</div>
+                  <div className="text-xs text-[#6A6F87]">{formatBytes(videoFile.size)}</div>
+                </div>
+                <button onClick={() => setVideoFile(null)} className="text-[#8D92A8] hover:text-[#D9534F]">
+                  <X size={15} />
+                </button>
+              </div>
+            ) : (
+              <div
+                onDragOver={(e) => { e.preventDefault(); setVideoDragging(true); }}
+                onDragLeave={() => setVideoDragging(false)}
+                onDrop={handleVideoDrop}
+                onClick={() => videoInputRef.current?.click()}
+                className={cn("border-2 border-dashed rounded-xl p-7 text-center cursor-pointer transition-all", videoDragging ? "border-[#4255ff] bg-[#eef0ff]" : "border-[#c5c9e8] bg-gradient-to-b from-[#eef0ff] to-[#F9FAFE] hover:border-[#7080e8]")}
+              >
+                <div className="w-11 h-11 rounded-xl bg-white shadow-sm flex items-center justify-center mx-auto mb-3 text-[#4255ff]">
+                  <Upload size={20} />
+                </div>
+                <div className="text-sm font-semibold text-[#15172B]">
+                  Drop a video here or <span className="text-[#4255ff]">browse</span>
+                </div>
+                <div className="text-xs text-[#8D92A8] mt-1">MP4, MOV, MP3, WAV, M4A &nbsp;·&nbsp; Max 25 MB</div>
+                <input
+                  ref={videoInputRef}
+                  type="file"
+                  accept=".mp4,.webm,.m4a,.wav,.mp3,.ogg,.mov"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f && isValidVideo(f)) setVideoFile(f);
+                    else if (f) toast.error("Please upload a video or audio file (MP4, MOV, MP3, etc.).");
+                  }}
+                />
+              </div>
+            )}
+
+            <Button onClick={handleGenerate} disabled={!videoFile} className="w-full mt-4 bg-[#4255ff] hover:bg-[#3346ee] text-white h-11 text-sm font-semibold rounded-xl gap-2 disabled:opacity-40">
+              Upload &amp; Transcribe <ArrowRight size={16} />
             </Button>
           </div>
         </TabsContent>
