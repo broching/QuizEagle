@@ -45,10 +45,21 @@ function parseMarkdown(text: string): Block[] {
     listType = null;
   };
 
-  for (const raw of lines) {
-    const trimmed = raw.trim();
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
 
-    if (trimmed === "") { flushList(); continue; }
+    if (trimmed === "") {
+      // If we're in a list, peek ahead — if the next non-blank line
+      // continues the same list type, keep accumulating instead of flushing.
+      if (listType) {
+        const nextNonBlank = lines.slice(i + 1).find(l => l.trim() !== "")?.trim() ?? "";
+        const continuesUl = listType === "ul" && /^[-*]\s+/.test(nextNonBlank);
+        const continuesOl = listType === "ol" && /^\d+\.\s+/.test(nextNonBlank);
+        if (continuesUl || continuesOl) continue;
+      }
+      flushList();
+      continue;
+    }
 
     if (trimmed.startsWith("#### ")) { flushList(); blocks.push({ type: "h4", text: trimmed.slice(5) }); continue; }
     if (trimmed.startsWith("### "))  { flushList(); blocks.push({ type: "h3", text: trimmed.slice(4) }); continue; }
