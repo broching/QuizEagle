@@ -122,7 +122,7 @@ function cleanJson(raw: string): string {
   return match ? match[0] : s;
 }
 
-async function callGemini(key: string, text: string): Promise<GeminiResult> {
+async function callGemini(key: string, text: string, numFlashcards: number, numQuiz: number): Promise<GeminiResult> {
   const res = await fetch(`${GEMINI_ENDPOINT}?key=${key}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -134,12 +134,12 @@ async function callGemini(key: string, text: string): Promise<GeminiResult> {
       },
       contents: [{
         parts: [{
-          text: `Create flashcards and a quiz from this content.\n\nGenerate:\n- Between 10 and 15 flashcards covering the key concepts, definitions, and important facts\n- Between 5 and 10 multiple choice quiz questions that test understanding\n\nContent:\n${text}`,
+          text: `Create flashcards and a quiz from this content.\n\nGenerate exactly:\n- ${numFlashcards} flashcards covering the key concepts, definitions, and important facts\n- ${numQuiz} multiple choice quiz questions that test understanding\n\nContent:\n${text}`,
         }],
       }],
       generationConfig: {
         temperature: 0.3,
-        maxOutputTokens: 4096,
+        maxOutputTokens: 8192,
         responseMimeType: "application/json",
         responseSchema: RESPONSE_SCHEMA,
         thinkingConfig: { thinkingBudget: 0 },
@@ -265,6 +265,8 @@ export async function POST(req: NextRequest) {
     storageId?: string;
     fileName?: string;
     mimeType?: string;
+    numFlashcards?: number;
+    numQuiz?: number;
   };
 
   try {
@@ -274,6 +276,8 @@ export async function POST(req: NextRequest) {
   }
 
   const { sourceType, storageId, fileName, mimeType } = body;
+  const numFlashcards = Math.min(Math.max(Number(body.numFlashcards ?? 10), 3), 50);
+  const numQuiz = Math.min(Math.max(Number(body.numQuiz ?? 5), 3), 50);
 
   if (!storageId) return NextResponse.json({ error: "Missing storageId" }, { status: 400 });
 
@@ -342,7 +346,7 @@ export async function POST(req: NextRequest) {
 
   for (let i = 0; i < keys.length; i++) {
     try {
-      parsed = await callGemini(keys[i], truncated);
+      parsed = await callGemini(keys[i], truncated, numFlashcards, numQuiz);
       console.log(`Gemini: used key index ${i}`);
       break;
     } catch (err) {

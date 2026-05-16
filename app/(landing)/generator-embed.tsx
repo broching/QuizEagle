@@ -23,6 +23,7 @@ import {
   RotateCcw,
   BookOpen,
   Brain,
+  Sliders,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -459,9 +460,12 @@ function GeneratorForm({ onGenerate }: { onGenerate: (step: "extracting" | "gene
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [docDragging, setDocDragging] = useState(false);
   const [videoDragging, setVideoDragging] = useState(false);
+  const [numFlashcards, setNumFlashcards] = useState(10);
+  const [numQuiz, setNumQuiz] = useState(5);
   const docInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const { isSignedIn } = useAuth();
 
   const handleDocDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -551,7 +555,7 @@ function GeneratorForm({ onGenerate }: { onGenerate: (step: "extracting" | "gene
     const fetchPromise = fetch("/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ ...body, numFlashcards, numQuiz }),
     });
 
     onGenerate("generating");
@@ -573,7 +577,7 @@ function GeneratorForm({ onGenerate }: { onGenerate: (step: "extracting" | "gene
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full space-y-4">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4 bg-[#eef0ff] p-1 rounded-xl h-auto w-full">
           <TabsTrigger value="document" className="flex-1 gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#4255ff] text-[#6A6F87] font-semibold px-3 py-2.5">
@@ -636,9 +640,6 @@ function GeneratorForm({ onGenerate }: { onGenerate: (step: "extracting" | "gene
               </div>
             )}
 
-            <Button onClick={handleGenerate} disabled={!docFile} className="w-full mt-4 bg-[#4255ff] hover:bg-[#3346ee] text-white h-11 text-sm font-semibold rounded-xl gap-2 disabled:opacity-40">
-              Upload &amp; Generate <ArrowRight size={16} />
-            </Button>
           </div>
         </TabsContent>
 
@@ -694,12 +695,91 @@ function GeneratorForm({ onGenerate }: { onGenerate: (step: "extracting" | "gene
               </div>
             )}
 
-            <Button onClick={handleGenerate} disabled={!videoFile} className="w-full mt-4 bg-[#4255ff] hover:bg-[#3346ee] text-white h-11 text-sm font-semibold rounded-xl gap-2 disabled:opacity-40">
-              Upload &amp; Transcribe <ArrowRight size={16} />
-            </Button>
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Count customization — requires account */}
+      {isSignedIn ? (
+        <div className="rounded-xl border border-[#e0e3f5] bg-[#f7f8ff] p-4 space-y-5">
+          <p className="text-xs font-bold text-[#1a1d3b] uppercase tracking-widest flex items-center gap-1.5">
+            <Sliders size={12} className="text-[#4255ff]" />
+            Customize
+          </p>
+
+          {/* Flashcard count slider */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-[#34384f] flex items-center gap-1.5">
+                <BookOpen size={12} className="text-[#4255ff]" /> Flashcards
+              </span>
+              <span className="text-lg font-extrabold text-[#4255ff] tabular-nums w-8 text-right">{numFlashcards}</span>
+            </div>
+            <input
+              type="range"
+              min={5}
+              max={20}
+              value={numFlashcards}
+              onChange={(e) => setNumFlashcards(Number(e.target.value))}
+              className="w-full cursor-pointer"
+              style={{ accentColor: "#4255ff" }}
+            />
+            <div className="flex justify-between text-xs mt-1">
+              <span className="text-[#9499c0]">5</span>
+              <span className="text-[#d97706] font-semibold">🔒 Up to 50 with Premium</span>
+              <span className="text-[#9499c0]">20</span>
+            </div>
+          </div>
+
+          {/* Quiz count slider */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-[#34384f] flex items-center gap-1.5">
+                <Brain size={12} className="text-[#d97706]" /> Quiz questions
+              </span>
+              <span className="text-lg font-extrabold text-[#d97706] tabular-nums w-8 text-right">{numQuiz}</span>
+            </div>
+            <input
+              type="range"
+              min={3}
+              max={20}
+              value={numQuiz}
+              onChange={(e) => setNumQuiz(Number(e.target.value))}
+              className="w-full cursor-pointer"
+              style={{ accentColor: "#d97706" }}
+            />
+            <div className="flex justify-between text-xs mt-1">
+              <span className="text-[#9499c0]">3</span>
+              <span className="text-[#d97706] font-semibold">🔒 Up to 50 with Premium</span>
+              <span className="text-[#9499c0]">20</span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-[#e0e3f5] bg-[#f7f8ff] p-4 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-[#eef0ff] flex items-center justify-center shrink-0">
+            <Sliders size={16} className="text-[#4255ff]" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold text-[#1a1d3b]">Customize flashcard &amp; quiz count</p>
+            <p className="text-xs text-[#6b6f9a] mt-0.5">Sign up free to choose up to 20 of each.</p>
+          </div>
+          <SignUpButton mode="modal">
+            <button className="text-xs font-bold text-white bg-[#4255ff] hover:bg-[#3346ee] px-3 py-1.5 rounded-lg shrink-0 transition-colors">
+              Sign up free
+            </button>
+          </SignUpButton>
+        </div>
+      )}
+
+      <Button
+        onClick={handleGenerate}
+        disabled={activeTab === "document" ? !docFile : !videoFile}
+        className="w-full bg-[#4255ff] hover:bg-[#3346ee] text-white h-11 text-sm font-semibold rounded-xl gap-2 disabled:opacity-40"
+      >
+        {activeTab === "document" ? <>Upload &amp; Generate</> : <>Upload &amp; Transcribe</>}
+        <ArrowRight size={16} />
+      </Button>
     </div>
   );
 }
