@@ -25,8 +25,6 @@ import {
   BookOpen,
   Brain,
   Sliders,
-  GraduationCap,
-  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -56,21 +54,12 @@ type GenerateResult = {
   quizQuestions: QuizResult[];
 };
 
-type Step = "idle" | "extracting" | "generating" | "course-building" | "done" | "error" | "rate-limited";
-type GenerateMode = "deck" | "course";
+type Step = "idle" | "extracting" | "generating" | "done" | "error" | "rate-limited";
 type RateLimitData = { isAuthenticated: boolean; resetAt: number };
 
 const LOADING_STEPS: { key: "extracting" | "generating"; label: string }[] = [
   { key: "extracting", label: "Extracting content..." },
   { key: "generating", label: "Generating flashcards with AI..." },
-];
-
-const COURSE_LOADING_STEPS = [
-  "Extracting content...",
-  "Analyzing document structure...",
-  "Building course outline...",
-  "Writing chapter notes...",
-  "Generating flashcards & quizzes...",
 ];
 
 // ─── Loading state ────────────────────────────────────────────────────────────
@@ -131,37 +120,6 @@ function LoadingState({ currentStep }: { currentStep: "extracting" | "generating
       <style jsx>{`
         @keyframes bounce { 0%, 80%, 100% { transform: scale(0.4); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
       `}</style>
-    </div>
-  );
-}
-
-// ─── Course building loading state ────────────────────────────────────────────
-
-function CourseLoadingState() {
-  const [stepIdx, setStepIdx] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setStepIdx((i) => Math.min(i + 1, COURSE_LOADING_STEPS.length - 1)), 8000);
-    return () => clearInterval(t);
-  }, []);
-  return (
-    <div className="flex flex-col gap-6 py-8 max-w-md mx-auto">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#4255ff,#3346ee)", boxShadow: "0 8px 24px rgba(92,107,192,.35)" }}>
-          <Loader2 size={24} className="text-white animate-spin" />
-        </div>
-        <p className="text-sm font-bold text-[#4255ff] uppercase tracking-widest">Building your course</p>
-      </div>
-      <div className="space-y-2">
-        {COURSE_LOADING_STEPS.map((label, i) => (
-          <div key={label} className={cn("flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-500", i === stepIdx ? "bg-[#eef0ff] border border-[#c5c9e8]" : i < stepIdx ? "opacity-50" : "opacity-30")}>
-            <div className={cn("w-5 h-5 rounded-full flex items-center justify-center shrink-0", i < stepIdx ? "bg-[#4255ff]" : i === stepIdx ? "bg-[#4255ff]" : "bg-[#c5c9e8]")}>
-              {i < stepIdx ? <CheckCircle size={12} className="text-white" /> : i === stepIdx ? <Loader2 size={10} className="text-white animate-spin" /> : <div className="w-2 h-2 rounded-full bg-white" />}
-            </div>
-            <span className={cn("text-sm font-medium", i === stepIdx ? "text-[#4255ff]" : "text-[#6A6F87]")}>{label}</span>
-          </div>
-        ))}
-      </div>
-      <p className="text-xs text-center text-[#9499c0]">This takes 30–90 seconds. Please keep this tab open.</p>
     </div>
   );
 }
@@ -522,45 +480,6 @@ function RateLimitedView({ data, onReset }: { data: RateLimitData; onReset: () =
   );
 }
 
-// ─── Mode switcher ───────────────────────────────────────────────────────────
-
-function ModeSwitcher({ mode, onModeChange }: { mode: GenerateMode; onModeChange: (m: GenerateMode) => void }) {
-  const { isSignedIn } = useAuth();
-  return (
-    <div className="flex gap-2 p-1 bg-[#eef0ff] rounded-2xl">
-      <button
-        onClick={() => onModeChange("deck")}
-        className={cn(
-          "flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-all",
-          mode === "deck" ? "bg-white text-[#4255ff] shadow-sm" : "text-[#6A6F87] hover:text-[#4255ff]"
-        )}
-      >
-        <BookOpen size={14} />Flashcards &amp; Quiz
-      </button>
-      <button
-        onClick={() => {
-          if (!isSignedIn) return;
-          onModeChange("course");
-        }}
-        className={cn(
-          "flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-all relative",
-          mode === "course" ? "bg-white text-[#4255ff] shadow-sm" : "text-[#6A6F87] hover:text-[#4255ff]",
-          !isSignedIn ? "cursor-default opacity-70" : ""
-        )}
-      >
-        <GraduationCap size={14} />Study Course
-        {!isSignedIn && (
-          <SignUpButton mode="modal">
-            <span className="absolute inset-0 flex items-center justify-center rounded-xl gap-1 text-xs font-bold text-[#4255ff] bg-white/90 opacity-0 hover:opacity-100 transition-opacity">
-              <Lock size={11} />Sign up to unlock
-            </span>
-          </SignUpButton>
-        )}
-      </button>
-    </div>
-  );
-}
-
 // ─── Generator form ───────────────────────────────────────────────────────────
 
 const VALID_DOC_EXTS = ["pdf", "pptx", "ppt", "docx", "doc"];
@@ -579,13 +498,9 @@ function isValidVideo(file: File) {
 function GeneratorForm({
   onGenerate,
   onRateLimit,
-  generateMode,
-  onCourseStart,
 }: {
   onGenerate: (step: "extracting" | "generating", result?: GenerateResult, error?: string) => void;
   onRateLimit: (data: RateLimitData) => void;
-  generateMode: GenerateMode;
-  onCourseStart: () => void;
 }) {
   const [activeTab, setActiveTab] = useState("document");
   const [docFile, setDocFile] = useState<File | null>(null);
@@ -687,42 +602,6 @@ function GeneratorForm({
       }
     }
 
-    // ── Course generation path ────────────────────────────────────────────────
-    if (generateMode === "course") {
-      onCourseStart();
-      try {
-        const res = await fetch("/api/generate-course", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...body, turnstileToken }),
-        });
-        if (res.status === 429) {
-          const data = await res.json().catch(() => ({}));
-          onRateLimit({ isAuthenticated: true, resetAt: data.resetAt ?? Date.now() + 86400000 });
-          return;
-        }
-        if (res.status === 401) {
-          onGenerate("generating", undefined, "Sign in to generate a Study Course.");
-          return;
-        }
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.error ?? `Server error ${res.status}`);
-        }
-        const data = await res.json();
-        window.location.href = `/dashboard/courses/${data.courseId}`;
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : "Course generation failed.";
-        toast.error(msg);
-        onGenerate("generating", undefined, msg);
-      } finally {
-        turnstileRef.current?.reset();
-        setTurnstileToken("");
-      }
-      return;
-    }
-
-    // ── Deck generation path ──────────────────────────────────────────────────
     const fetchPromise = fetch("/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -960,10 +839,7 @@ function GeneratorForm({
         disabled={(activeTab === "document" ? !docFile : !videoFile) || (!!siteKey && !turnstileToken)}
         className="w-full bg-[#4255ff] hover:bg-[#3346ee] text-white h-11 text-sm font-semibold rounded-xl gap-2 disabled:opacity-40"
       >
-        {generateMode === "course"
-          ? <><GraduationCap size={16} />Build Study Course</>
-          : activeTab === "document" ? <>Upload &amp; Generate</> : <>Upload &amp; Transcribe</>
-        }
+        {activeTab === "document" ? <>Upload &amp; Generate</> : <>Upload &amp; Transcribe</>}
         <ArrowRight size={16} />
       </Button>
     </div>
@@ -974,7 +850,6 @@ function GeneratorForm({
 
 export default function GeneratorEmbed() {
   const [step, setStep] = useState<Step>("idle");
-  const [generateMode, setGenerateMode] = useState<GenerateMode>("deck");
   const [result, setResult] = useState<GenerateResult | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [rateLimitData, setRateLimitData] = useState<RateLimitData | null>(null);
@@ -996,10 +871,6 @@ export default function GeneratorEmbed() {
   function handleRateLimit(data: RateLimitData) {
     setRateLimitData(data);
     setStep("rate-limited");
-  }
-
-  if (step === "course-building") {
-    return <CourseLoadingState />;
   }
 
   if (step === "extracting" || step === "generating") {
@@ -1031,17 +902,5 @@ export default function GeneratorEmbed() {
     return <ResultView result={result} onGenerateAnother={() => { setStep("idle"); setResult(null); }} />;
   }
 
-  // ── Mode switcher + form ──────────────────────────────────────────────────
-  return (
-    <div className="w-full space-y-4">
-      {/* Mode switcher */}
-      <ModeSwitcher mode={generateMode} onModeChange={setGenerateMode} />
-      <GeneratorForm
-        onGenerate={handleGenerate}
-        onRateLimit={handleRateLimit}
-        generateMode={generateMode}
-        onCourseStart={() => setStep("course-building")}
-      />
-    </div>
-  );
+  return <GeneratorForm onGenerate={handleGenerate} onRateLimit={handleRateLimit} />;
 }

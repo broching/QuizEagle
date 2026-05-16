@@ -16,12 +16,10 @@ import type {
 import type * as files from "../files.js";
 import type * as http from "../http.js";
 import type * as mutations_attempts from "../mutations/attempts.js";
-import type * as mutations_courses from "../mutations/courses.js";
 import type * as mutations_decks from "../mutations/decks.js";
 import type * as mutations_rateLimit from "../mutations/rateLimit.js";
 import type * as paymentAttemptTypes from "../paymentAttemptTypes.js";
 import type * as paymentAttempts from "../paymentAttempts.js";
-import type * as queries_courses from "../queries/courses.js";
 import type * as queries_decks from "../queries/decks.js";
 import type * as users from "../users.js";
 
@@ -37,12 +35,10 @@ declare const fullApi: ApiFromModules<{
   files: typeof files;
   http: typeof http;
   "mutations/attempts": typeof mutations_attempts;
-  "mutations/courses": typeof mutations_courses;
   "mutations/decks": typeof mutations_decks;
   "mutations/rateLimit": typeof mutations_rateLimit;
   paymentAttemptTypes: typeof paymentAttemptTypes;
   paymentAttempts: typeof paymentAttempts;
-  "queries/courses": typeof queries_courses;
   "queries/decks": typeof queries_decks;
   users: typeof users;
 }>;
