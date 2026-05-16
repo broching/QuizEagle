@@ -24,29 +24,48 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SharePanel } from "@/components/share-panel";
-import { Layers, Video, FileText, Trash2, Plus, Brain, Share2, Eye } from "lucide-react";
+import { ProgramCard } from "@/components/programs/program-card";
+import { Layers, Video, FileText, Trash2, Plus, Brain, Share2, Eye, GraduationCap } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 
 export default function DashboardPage() {
   const decks = useQuery(api.queries.decks.listDecks);
+  const programs = useQuery(api.queries.studyPrograms.listPrograms);
   const deleteDeck = useMutation(api.mutations.decks.deleteDeck);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const deleteProgram = useMutation(api.mutations.studyPrograms.deleteProgram);
+  const [deletingDeckId, setDeletingDeckId] = useState<string | null>(null);
+  const [deletingProgramId, setDeletingProgramId] = useState<string | null>(null);
 
-  async function handleDelete(deckId: Id<"decks">) {
-    setDeletingId(deckId);
+  async function handleDeleteDeck(deckId: Id<"decks">) {
+    setDeletingDeckId(deckId);
     try {
       await deleteDeck({ deckId });
       toast.success("Deck deleted.");
     } catch {
       toast.error("Failed to delete deck.");
     } finally {
-      setDeletingId(null);
+      setDeletingDeckId(null);
     }
   }
 
-  if (decks === undefined) {
+  async function handleDeleteProgram(programId: Id<"studyPrograms">) {
+    setDeletingProgramId(programId);
+    try {
+      await deleteProgram({ programId });
+      toast.success("Study program deleted.");
+    } catch {
+      toast.error("Failed to delete program.");
+    } finally {
+      setDeletingProgramId(null);
+    }
+  }
+
+  const isLoading = decks === undefined || programs === undefined;
+
+  if (isLoading) {
     return (
       <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -58,54 +77,113 @@ export default function DashboardPage() {
     );
   }
 
-  if (decks.length === 0) {
+  const hasContent = decks.length > 0 || programs.length > 0;
+
+  if (!hasContent) {
     return (
       <div className="max-w-6xl mx-auto px-6 py-16 flex flex-col items-center gap-6 text-center">
         <div
           className="w-20 h-20 rounded-2xl flex items-center justify-center"
-          style={{
-            background: "linear-gradient(135deg, #EEF0FB, #C5CCEC)",
-          }}
+          style={{ background: "linear-gradient(135deg, #EEF0FB, #C5CCEC)" }}
         >
           <Brain size={36} className="text-[#5C6BC0]" />
         </div>
         <div>
           <h2 className="text-2xl font-bold text-[#15172B] tracking-tight">
-            No decks yet
+            Nothing here yet
           </h2>
           <p className="text-[#6A6F87] mt-2 max-w-sm">
-            Upload a PDF or paste a YouTube link to generate your first set of
-            flashcards and quiz questions.
+            Create a Flash Deck for quick flashcards and quizzes, or a Study Program for a full structured course.
           </p>
         </div>
-        <Link href="/dashboard/new">
-          <Button className="gap-2 bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white px-6 py-3 text-base h-auto">
-            <Plus size={18} />
-            Generate your first deck
-          </Button>
-        </Link>
+        <div className="flex gap-3 flex-wrap justify-center">
+          <Link href="/dashboard/new">
+            <Button className="gap-2 bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white px-5 py-3 h-auto">
+              <Layers size={16} />
+              New Flash Deck
+            </Button>
+          </Link>
+          <Link href="/dashboard/programs/new">
+            <Button className="gap-2 bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white px-5 py-3 h-auto">
+              <GraduationCap size={16} />
+              New Study Program
+            </Button>
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#15172B] tracking-tight">
-          My Study Decks
-        </h1>
-        <p className="text-[#6A6F87] text-sm mt-1">{decks.length} deck{decks.length !== 1 ? "s" : ""}</p>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {decks.map((deck: Doc<"decks">) => (
-          <DeckCard
-            key={deck._id}
-            deck={deck}
-            onDelete={handleDelete}
-            deleting={deletingId === deck._id}
-          />
-        ))}
-      </div>
+      <Tabs defaultValue={programs.length > 0 ? "programs" : "decks"}>
+        <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+          <TabsList className="bg-white border border-[#e0e3f5] p-1 rounded-xl h-auto">
+            <TabsTrigger
+              value="decks"
+              className="rounded-lg px-4 py-1.5 text-sm font-semibold data-[state=active]:bg-[#5C6BC0] data-[state=active]:text-white text-[#6A6F87]"
+            >
+              Flash Decks {decks.length > 0 && <span className="ml-1.5 text-xs opacity-70">({decks.length})</span>}
+            </TabsTrigger>
+            <TabsTrigger
+              value="programs"
+              className="rounded-lg px-4 py-1.5 text-sm font-semibold data-[state=active]:bg-[#5C6BC0] data-[state=active]:text-white text-[#6A6F87]"
+            >
+              Study Programs {programs.length > 0 && <span className="ml-1.5 text-xs opacity-70">({programs.length})</span>}
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="decks">
+          {decks.length === 0 ? (
+            <div className="flex flex-col items-center gap-4 py-12 text-center">
+              <Layers size={32} className="text-[#DCDEE7]" />
+              <p className="text-[#6A6F87]">No flash decks yet.</p>
+              <Link href="/dashboard/new">
+                <Button className="gap-2 bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white">
+                  <Plus size={15} /> New Flash Deck
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {decks.map((deck: Doc<"decks">) => (
+                <DeckCard
+                  key={deck._id}
+                  deck={deck}
+                  onDelete={handleDeleteDeck}
+                  deleting={deletingDeckId === deck._id}
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="programs">
+          {programs.length === 0 ? (
+            <div className="flex flex-col items-center gap-4 py-12 text-center">
+              <GraduationCap size={32} className="text-[#DCDEE7]" />
+              <p className="text-[#6A6F87]">No study programs yet.</p>
+              <Link href="/dashboard/programs/new">
+                <Button className="gap-2 bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white">
+                  <Plus size={15} /> New Study Program
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {programs.map((program) => (
+                <ProgramCard
+                  key={program._id}
+                  program={program}
+                  onDelete={handleDeleteProgram}
+                  deleting={deletingProgramId === program._id}
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
