@@ -6,6 +6,22 @@ import { auth } from "@clerk/nextjs/server";
 
 const FREE_LIMIT = 10;
 
+async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
+  const secret = process.env.TURNSTILE_SECRET_KEY;
+  if (!secret) return true; // skip verification in dev if not configured
+  try {
+    const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ secret, response: token, remoteip: ip }),
+    });
+    const data = await res.json() as { success: boolean };
+    return data.success === true;
+  } catch {
+    return true; // fail open if Cloudflare is unreachable
+  }
+}
+
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 // Polyfill browser DOM globals required by pdfjs-dist (used by pdf-parse v2)
@@ -301,12 +317,19 @@ export async function POST(req: NextRequest) {
     mimeType?: string;
     numFlashcards?: number;
     numQuiz?: number;
+    turnstileToken?: string;
   };
 
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  // ── Turnstile bot check ───────────────────────────────────────────────────
+  const turnstileOk = await verifyTurnstile(body.turnstileToken ?? "", ip);
+  if (!turnstileOk) {
+    return NextResponse.json({ error: "Bot check failed. Please refresh and try again." }, { status: 403 });
   }
 
   const { sourceType, storageId, fileName, mimeType } = body;
