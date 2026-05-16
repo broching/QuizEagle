@@ -10,17 +10,15 @@ import { NotesRenderer, sectionElementId } from "./notes-renderer";
 import { ProgramFlashcards } from "./program-flashcards";
 import { ProgramQuiz } from "./program-quiz";
 import { ChapterGeneratingIndicator } from "./generation-progress";
-import { CheckCircle, BookOpen } from "lucide-react";
+import { CheckCircle, BookOpen, Circle, Layers, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-
-type Tab = "notes" | "flashcards" | "quiz";
 
 export function ChapterContent({
   programId,
   chapterId,
   completedChapterIds,
   onChapterComplete,
+  onChapterUncomplete,
   targetSectionIndex,
   onSectionScrolled,
 }: {
@@ -28,13 +26,15 @@ export function ChapterContent({
   chapterId: string | null;
   completedChapterIds: string[];
   onChapterComplete: (chapterId: string) => void;
+  onChapterUncomplete: (chapterId: string) => void;
   targetSectionIndex?: number | null;
   onSectionScrolled?: () => void;
 }) {
-  const [activeTab, setActiveTab] = useState<Tab>("notes");
   const markComplete = useMutation(api.mutations.studyPrograms.markChapterComplete);
+  const markIncomplete = useMutation(api.mutations.studyPrograms.markChapterIncomplete);
   const saveAttempt = useMutation(api.mutations.studyPrograms.saveQuizAttempt);
   const prevSectionIndex = useRef<number | null | undefined>(null);
+  const [completingId, setCompletingId] = useState<string | null>(null);
 
   const content = useQuery(
     api.queries.studyPrograms.getChapterContent,
@@ -45,11 +45,9 @@ export function ChapterContent({
     chapterId ? { chapterId: chapterId as Id<"studyChapters"> } : "skip"
   );
 
-  // Scroll to section when targetSectionIndex changes
   useEffect(() => {
     if (targetSectionIndex == null || targetSectionIndex === prevSectionIndex.current) return;
     prevSectionIndex.current = targetSectionIndex;
-
     const doScroll = () => {
       const el = document.getElementById(sectionElementId(targetSectionIndex));
       if (el) {
@@ -57,14 +55,7 @@ export function ChapterContent({
         onSectionScrolled?.();
       }
     };
-
-    if (activeTab !== "notes") {
-      setActiveTab("notes");
-      // Wait for tab content to render before scrolling
-      requestAnimationFrame(() => requestAnimationFrame(doScroll));
-    } else {
-      requestAnimationFrame(doScroll);
-    }
+    requestAnimationFrame(() => requestAnimationFrame(doScroll));
   }, [targetSectionIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!chapterId) {
@@ -88,13 +79,8 @@ export function ChapterContent({
     );
   }
 
-  if (content === null) {
-    return <p className="text-sm text-[#6A6F87]">Chapter not found.</p>;
-  }
-
-  if (content.chapter.status === "generating") {
-    return <ChapterGeneratingIndicator />;
-  }
+  if (content === null) return <p className="text-sm text-[#6A6F87]">Chapter not found.</p>;
+  if (content.chapter.status === "generating") return <ChapterGeneratingIndicator />;
 
   if (content.chapter.status === "pending") {
     return (
@@ -114,16 +100,22 @@ export function ChapterContent({
 
   const isCompleted = completedChapterIds.includes(chapterId);
 
-  const handleMarkComplete = async () => {
+  const handleToggleComplete = async () => {
+    setCompletingId(chapterId);
     try {
-      await markComplete({
-        programId: programId as Id<"studyPrograms">,
-        chapterId,
-      });
-      onChapterComplete(chapterId);
-      toast.success("Chapter marked as complete!");
+      if (isCompleted) {
+        await markIncomplete({ programId: programId as Id<"studyPrograms">, chapterId });
+        onChapterUncomplete(chapterId);
+        toast.info("Chapter marked as incomplete.");
+      } else {
+        await markComplete({ programId: programId as Id<"studyPrograms">, chapterId });
+        onChapterComplete(chapterId);
+        toast.success("Chapter marked as complete!");
+      }
     } catch {
-      toast.error("Failed to mark chapter complete.");
+      toast.error("Failed to update chapter status.");
+    } finally {
+      setCompletingId(null);
     }
   };
 
@@ -139,96 +131,100 @@ export function ChapterContent({
 
   const handleAutoComplete = async () => {
     if (!isCompleted) {
-      await markComplete({
-        programId: programId as Id<"studyPrograms">,
-        chapterId,
-      });
+      await markComplete({ programId: programId as Id<"studyPrograms">, chapterId });
       onChapterComplete(chapterId);
     }
   };
 
-  const tabs: { value: Tab; label: string }[] = [
-    { value: "notes", label: "Notes" },
-    { value: "flashcards", label: `Flashcards (${content.flashcards.length})` },
-    { value: "quiz", label: `Quiz (${content.quizQuestions.length})` },
-  ];
-
   return (
-    <div className="space-y-5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-bold text-[#5C6BC0] uppercase tracking-widest mb-1">
-            Chapter {content.chapter.chapterNumber}
-          </p>
-          <h2 className="text-xl sm:text-2xl font-extrabold text-[#15172B] tracking-tight">
-            {content.chapter.title}
-          </h2>
+    <div className="space-y-8 pb-8">
+      {/* Chapter header */}
+      <div>
+        <p className="text-xs font-bold text-[#5C6BC0] uppercase tracking-widest mb-1">
+          Chapter {content.chapter.chapterNumber}
+        </p>
+        <h2 className="text-xl sm:text-2xl font-extrabold text-[#15172B] tracking-tight">
+          {content.chapter.title}
+        </h2>
+      </div>
+
+      {/* Notes */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <BookOpen size={16} className="text-[#5C6BC0]" />
+          <h3 className="text-sm font-bold text-[#15172B] uppercase tracking-widest">Study Notes</h3>
         </div>
-        {isCompleted ? (
-          <div className="flex items-center gap-1.5 text-[#229155] text-sm font-semibold shrink-0 mt-1">
-            <CheckCircle size={16} />
-            <span className="hidden sm:inline">Complete</span>
-          </div>
+        {content.chapter.notes ? (
+          <NotesRenderer notes={content.chapter.notes} />
         ) : (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleMarkComplete}
-            className="gap-1.5 border-[#e0e3f5] text-[#5C6BC0] hover:bg-[#EEF0FB] shrink-0 mt-1 text-xs"
-          >
-            <CheckCircle size={14} />
-            <span className="hidden sm:inline">Mark Complete</span>
-            <span className="sm:hidden">Done</span>
-          </Button>
+          <p className="text-sm text-[#6A6F87]">No notes available for this chapter.</p>
         )}
-      </div>
+      </section>
 
-      {/* Custom tab bar — avoids shadcn's white indicator bug */}
-      <div className="bg-white border border-[#e0e3f5] p-1 rounded-2xl flex shadow-sm">
-        {tabs.map(tab => (
-          <button
-            key={tab.value}
-            onClick={() => setActiveTab(tab.value)}
-            className={cn(
-              "flex-1 rounded-xl py-2 px-2 text-xs sm:text-sm font-semibold transition-all",
-              activeTab === tab.value
-                ? "bg-[#5C6BC0] text-white shadow-sm"
-                : "text-[#6A6F87] hover:text-[#5C6BC0]"
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      {/* Flashcards */}
+      {content.flashcards.length > 0 && (
+        <section className="border-t border-[#ECEEF4] pt-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Layers size={16} className="text-[#5C6BC0]" />
+            <h3 className="text-sm font-bold text-[#15172B] uppercase tracking-widest">
+              Flashcards
+              <span className="ml-2 text-xs font-normal text-[#8D92A8] normal-case tracking-normal">
+                ({content.flashcards.length} cards)
+              </span>
+            </h3>
+          </div>
+          <ProgramFlashcards
+            flashcards={content.flashcards}
+            onAllReviewed={() => toast.info("All flashcards reviewed!")}
+          />
+        </section>
+      )}
 
-      {/* Tab content */}
-      {activeTab === "notes" && (
-        <div>
-          {content.chapter.notes ? (
-            <NotesRenderer notes={content.chapter.notes} />
+      {/* Quiz */}
+      {content.quizQuestions.length > 0 && (
+        <section className="border-t border-[#ECEEF4] pt-8">
+          <div className="flex items-center gap-2 mb-4">
+            <HelpCircle size={16} className="text-[#5C6BC0]" />
+            <h3 className="text-sm font-bold text-[#15172B] uppercase tracking-widest">
+              Quiz
+              <span className="ml-2 text-xs font-normal text-[#8D92A8] normal-case tracking-normal">
+                ({content.quizQuestions.length} questions)
+              </span>
+            </h3>
+          </div>
+          <ProgramQuiz
+            questions={content.quizQuestions}
+            attempts={attempts ?? []}
+            onSubmit={handleQuizSubmit}
+            onAutoComplete={handleAutoComplete}
+          />
+        </section>
+      )}
+
+      {/* Mark Complete toggle */}
+      <div className="border-t border-[#ECEEF4] pt-6">
+        <Button
+          onClick={handleToggleComplete}
+          disabled={completingId === chapterId}
+          className={
+            isCompleted
+              ? "w-full gap-2 bg-[#E8F5EE] hover:bg-[#d4eddf] text-[#229155] border border-[#b7ddc9] font-semibold shadow-none"
+              : "w-full gap-2 bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white font-semibold"
+          }
+        >
+          {isCompleted ? (
+            <>
+              <CheckCircle size={16} />
+              Chapter Complete — Click to Undo
+            </>
           ) : (
-            <p className="text-sm text-[#6A6F87]">No notes available for this chapter.</p>
+            <>
+              <Circle size={16} />
+              Mark Chapter as Complete
+            </>
           )}
-        </div>
-      )}
-
-      {activeTab === "flashcards" && (
-        <ProgramFlashcards
-          flashcards={content.flashcards}
-          onAllReviewed={() => {
-            toast.info("All flashcards reviewed! Consider marking the chapter as complete.");
-          }}
-        />
-      )}
-
-      {activeTab === "quiz" && (
-        <ProgramQuiz
-          questions={content.quizQuestions}
-          attempts={attempts ?? []}
-          onSubmit={handleQuizSubmit}
-          onAutoComplete={handleAutoComplete}
-        />
-      )}
+        </Button>
+      </div>
     </div>
   );
 }

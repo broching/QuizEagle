@@ -11,7 +11,7 @@ import { ChapterSidebar, ChapterSidebarContent } from "@/components/programs/cha
 import { ChapterContent } from "@/components/programs/chapter-content";
 import { ChatPanel } from "@/components/programs/chat-panel";
 import { GenerationProgress } from "@/components/programs/generation-progress";
-import { ArrowLeft, MessageCircle, X, LayoutList } from "lucide-react";
+import { ArrowLeft, MessageCircle, X, LayoutList, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +24,7 @@ export default function ProgramPage({
   const [activeChapterId, setActiveChapterId] = useState<string | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [completedChapterIds, setCompletedChapterIds] = useState<string[]>([]);
   const [targetSectionIndex, setTargetSectionIndex] = useState<number | null>(null);
 
@@ -55,7 +56,6 @@ export default function ProgramPage({
 
   const handleChapterSelect = (id: string) => {
     setActiveChapterId(id);
-    // Reset section target when switching chapters
     setTargetSectionIndex(null);
   };
 
@@ -111,16 +111,14 @@ export default function ProgramPage({
           <ArrowLeft size={18} />
         </Link>
 
-        {/* Mobile: chapters button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setMobileSidebarOpen(true)}
-          className="md:hidden gap-1.5 text-[#6A6F87] hover:text-[#5C6BC0] hover:bg-[#EEF0FB] h-8 px-2"
+        {/* Desktop: sidebar collapse toggle */}
+        <button
+          onClick={() => setSidebarCollapsed(o => !o)}
+          className="hidden md:flex items-center justify-center w-7 h-7 rounded-lg text-[#6A6F87] hover:text-[#5C6BC0] hover:bg-[#EEF0FB] transition-colors"
+          title={sidebarCollapsed ? "Show chapters" : "Hide chapters"}
         >
-          <LayoutList size={15} />
-          <span className="text-xs font-semibold">Chapters</span>
-        </Button>
+          {sidebarCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+        </button>
 
         <div className="flex-1 min-w-0">
           <p className="text-xs font-bold text-[#5C6BC0] uppercase tracking-widest hidden sm:block">Study Program</p>
@@ -137,7 +135,7 @@ export default function ProgramPage({
           )}
         >
           {chatOpen ? <X size={15} /> : <MessageCircle size={15} />}
-          <span className="text-xs font-semibold">{chatOpen ? "Close" : "Chat"}</span>
+          <span className="text-xs font-semibold hidden sm:inline">{chatOpen ? "Close" : "Chat"}</span>
         </Button>
       </div>
 
@@ -170,11 +168,11 @@ export default function ProgramPage({
 
       {/* Main layout */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Desktop sidebar */}
-        <ChapterSidebar {...sidebarProps} />
+        {/* Desktop sidebar — collapsible */}
+        {!sidebarCollapsed && <ChapterSidebar {...sidebarProps} />}
 
         {/* Main content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto relative">
           {program.status === "generating_outline" ? (
             <GenerationProgress
               status="generating_outline"
@@ -203,11 +201,8 @@ export default function ProgramPage({
                 programId={programId}
                 chapterId={activeChapterId}
                 completedChapterIds={completedChapterIds}
-                onChapterComplete={id => {
-                  setCompletedChapterIds(prev =>
-                    prev.includes(id) ? prev : [...prev, id]
-                  );
-                }}
+                onChapterComplete={id => setCompletedChapterIds(prev => prev.includes(id) ? prev : [...prev, id])}
+                onChapterUncomplete={id => setCompletedChapterIds(prev => prev.filter(c => c !== id))}
                 targetSectionIndex={targetSectionIndex}
                 onSectionScrolled={() => setTargetSectionIndex(null)}
               />
@@ -221,6 +216,31 @@ export default function ProgramPage({
             <ChatPanel programId={programId} />
           </div>
         )}
+      </div>
+
+      {/* Mobile floating action buttons */}
+      <div className="md:hidden fixed bottom-5 left-4 z-50 flex flex-col gap-2">
+        <button
+          onClick={() => setMobileSidebarOpen(true)}
+          className="w-12 h-12 rounded-full bg-[#5C6BC0] shadow-lg flex items-center justify-center text-white active:scale-95 transition-transform"
+          aria-label="Open chapters"
+        >
+          <LayoutList size={20} />
+        </button>
+      </div>
+
+      {/* Mobile chat FAB */}
+      <div className="md:hidden fixed bottom-5 right-4 z-50">
+        <button
+          onClick={() => setChatOpen(o => !o)}
+          className={cn(
+            "w-12 h-12 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform",
+            chatOpen ? "bg-[#34384F] text-white" : "bg-[#5C6BC0] text-white"
+          )}
+          aria-label="Toggle chat"
+        >
+          {chatOpen ? <X size={20} /> : <MessageCircle size={20} />}
+        </button>
       </div>
     </div>
   );

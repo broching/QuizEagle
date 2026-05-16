@@ -188,6 +188,27 @@ export const markChapterComplete = mutation({
   },
 });
 
+export const markChapterIncomplete = mutation({
+  args: { programId: v.id("studyPrograms"), chapterId: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const userId = identity.subject;
+
+    const existing = await ctx.db
+      .query("studyProgress")
+      .withIndex("by_program_user", q => q.eq("programId", args.programId).eq("userId", userId))
+      .first();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        completedChapterIds: existing.completedChapterIds.filter(id => id !== args.chapterId),
+        lastAccessedAt: Date.now(),
+      });
+    }
+  },
+});
+
 export const saveQuizAttempt = mutation({
   args: {
     programId: v.id("studyPrograms"),

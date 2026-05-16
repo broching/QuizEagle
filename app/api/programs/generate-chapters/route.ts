@@ -195,14 +195,20 @@ ${program.documentText}`,
       const content = await withKeyRotation(keys, (key) =>
         callGeminiStructured<ChapterContent>(
           key,
-          "You are an expert educator. Return ONLY valid JSON matching the exact schema. No markdown, no explanation.",
+          "You are an expert educator. Return ONLY valid JSON matching the exact schema. No markdown wrapper around the JSON, no code fences.",
           `Generate comprehensive study materials for ${chapter.title}.
 
 Sections to cover:
 ${sectionList}
 
 Requirements:
-- notes: Write detailed study notes for EACH section with thorough explanations and examples
+- notes: Write detailed study notes for EACH section. Format the "content" field using markdown:
+  - Use ## or ### for sub-headings within a section
+  - Use **bold** for key terms and important concepts
+  - Use numbered lists (1. 2. 3.) for sequential steps or ordered principles
+  - Use bullet lists (- item) for unordered points
+  - Break content into short paragraphs with blank lines between them
+  - Do NOT write everything as one long paragraph
 - flashcards: Generate exactly 8 flashcards covering key concepts and definitions from this chapter
 - quizQuestions: Generate exactly 5 multiple-choice questions testing deep understanding
 
