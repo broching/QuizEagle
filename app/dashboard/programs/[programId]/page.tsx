@@ -235,6 +235,10 @@ export default function ProgramPage({
                 onChapterUncomplete={id => setCompletedChapterIds(prev => prev.filter(c => c !== id))}
                 targetSectionIndex={targetSectionIndex}
                 onSectionScrolled={() => setTargetSectionIndex(null)}
+                hasPrev={!!prevChapter}
+                hasNext={!!nextChapter}
+                onPrevChapter={() => prevChapter && handleChapterSelect(prevChapter._id)}
+                onNextChapter={() => nextChapter && handleChapterSelect(nextChapter._id)}
               />
             </div>
           )}

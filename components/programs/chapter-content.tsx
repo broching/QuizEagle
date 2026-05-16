@@ -10,7 +10,7 @@ import { NotesRenderer, sectionElementId } from "./notes-renderer";
 import { ProgramFlashcards } from "./program-flashcards";
 import { ProgramQuiz } from "./program-quiz";
 import { ChapterGeneratingIndicator } from "./generation-progress";
-import { CheckCircle, BookOpen, Circle, Layers, HelpCircle } from "lucide-react";
+import { CheckCircle, BookOpen, Circle, Layers, HelpCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 export function ChapterContent({
@@ -21,6 +21,10 @@ export function ChapterContent({
   onChapterUncomplete,
   targetSectionIndex,
   onSectionScrolled,
+  onPrevChapter,
+  onNextChapter,
+  hasPrev,
+  hasNext,
 }: {
   programId: string;
   chapterId: string | null;
@@ -29,6 +33,10 @@ export function ChapterContent({
   onChapterUncomplete: (chapterId: string) => void;
   targetSectionIndex?: number | null;
   onSectionScrolled?: () => void;
+  onPrevChapter?: () => void;
+  onNextChapter?: () => void;
+  hasPrev?: boolean;
+  hasNext?: boolean;
 }) {
   const markComplete = useMutation(api.mutations.studyPrograms.markChapterComplete);
   const markIncomplete = useMutation(api.mutations.studyPrograms.markChapterIncomplete);
@@ -225,6 +233,28 @@ export function ChapterContent({
           )}
         </Button>
       </div>
+
+      {/* Prev / Next chapter nav */}
+      {(hasPrev || hasNext) && (
+        <div className="flex items-center justify-between gap-3 border-t border-[#ECEEF4] pt-6">
+          <button
+            onClick={onPrevChapter}
+            disabled={!hasPrev}
+            className="flex items-center gap-1.5 text-sm font-semibold text-[#5C6BC0] hover:text-[#4F5BAE] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+          >
+            <ChevronLeft size={18} />
+            Previous Chapter
+          </button>
+          <button
+            onClick={onNextChapter}
+            disabled={!hasNext}
+            className="flex items-center gap-1.5 text-sm font-semibold text-[#5C6BC0] hover:text-[#4F5BAE] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+          >
+            Next Chapter
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

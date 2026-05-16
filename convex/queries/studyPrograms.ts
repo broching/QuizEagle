@@ -5,11 +5,23 @@ export const listPrograms = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];
-    return await ctx.db
+    const programs = await ctx.db
       .query("studyPrograms")
       .withIndex("by_user", q => q.eq("userId", identity.subject))
       .order("desc")
       .collect();
+
+    return await Promise.all(
+      programs.map(async (program) => {
+        const progress = await ctx.db
+          .query("studyProgress")
+          .withIndex("by_program_user", q =>
+            q.eq("programId", program._id).eq("userId", identity.subject)
+          )
+          .first();
+        return { ...program, completedChapterIds: progress?.completedChapterIds ?? [] };
+      })
+    );
   },
 });
 

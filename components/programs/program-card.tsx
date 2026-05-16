@@ -33,28 +33,23 @@ type Program = {
   status: "generating_outline" | "generating_chapters" | "ready" | "failed";
   totalChapters?: number;
   completedChapters: number;
+  completedChapterIds: string[];
   createdAt: number;
   sourceFileName?: string;
 };
 
-type Progress = {
-  completedChapterIds: string[];
-} | null;
-
 export function ProgramCard({
   program,
-  progress,
   onDelete,
   deleting,
 }: {
   program: Program;
-  progress?: Progress;
   onDelete: (id: Id<"studyPrograms">) => void;
   deleting: boolean;
 }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const completedCount = progress?.completedChapterIds.length ?? 0;
+  const completedCount = program.completedChapterIds.length;
   const total = program.totalChapters ?? program.completedChapters;
   const pct = total > 0 ? Math.round((completedCount / total) * 100) : 0;
 
