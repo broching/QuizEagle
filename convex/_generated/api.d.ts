@@ -17,6 +17,7 @@ import type * as files from "../files.js";
 import type * as http from "../http.js";
 import type * as mutations_attempts from "../mutations/attempts.js";
 import type * as mutations_decks from "../mutations/decks.js";
+import type * as mutations_rateLimit from "../mutations/rateLimit.js";
 import type * as paymentAttemptTypes from "../paymentAttemptTypes.js";
 import type * as paymentAttempts from "../paymentAttempts.js";
 import type * as queries_decks from "../queries/decks.js";
@@ -35,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   "mutations/attempts": typeof mutations_attempts;
   "mutations/decks": typeof mutations_decks;
+  "mutations/rateLimit": typeof mutations_rateLimit;
   paymentAttemptTypes: typeof paymentAttemptTypes;
   paymentAttempts: typeof paymentAttempts;
   "queries/decks": typeof queries_decks;

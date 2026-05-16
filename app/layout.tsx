@@ -7,6 +7,7 @@ import Script from "next/script";
 
 import { ClerkProvider } from '@clerk/nextjs'
 import ConvexClientProvider from '@/components/ConvexClientProvider'
+import PostHogProvider from '@/components/PostHogProvider'
 
 
 const nunito = Nunito({
@@ -78,8 +79,10 @@ export default function RootLayout({
         >
           <ClerkProvider>
             <ConvexClientProvider>
-              {children}
-              <Toaster richColors position="top-right" />
+              <PostHogProvider>
+                {children}
+                <Toaster richColors position="top-right" />
+              </PostHogProvider>
             </ConvexClientProvider>
           </ClerkProvider>
         </ThemeProvider>
