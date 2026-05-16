@@ -97,18 +97,19 @@ export default function DeckPage({
       />
 
       <Tabs defaultValue="flashcards">
-        <TabsList className="mb-6 bg-[#ECEEF4] p-1 rounded-xl h-auto">
+        <TabsList className="mb-6 bg-white border border-[#e0e3f5] p-1.5 rounded-2xl h-auto w-full shadow-sm">
           <TabsTrigger
             value="flashcards"
-            className="gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#5C6BC0] text-[#6A6F87] font-semibold px-5 py-2.5"
+            className="flex-1 gap-2 rounded-xl data-[state=active]:bg-[#4255ff] data-[state=active]:text-white data-[state=active]:shadow-md text-[#6b6f9a] font-bold px-4 py-3 transition-all"
           >
             <Layers size={15} />
             Flashcards ({deck.flashcardCount})
           </TabsTrigger>
           <TabsTrigger
             value="quiz"
-            className="gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#5C6BC0] text-[#6A6F87] font-semibold px-5 py-2.5"
+            className="flex-1 gap-2 rounded-xl data-[state=active]:bg-[#d97706] data-[state=active]:text-white data-[state=active]:shadow-md text-[#6b6f9a] font-bold px-4 py-3 transition-all"
           >
+            <Trophy size={15} />
             Quiz ({deck.quizCount} Qs)
           </TabsTrigger>
         </TabsList>
@@ -243,11 +244,16 @@ function FlashcardsTab({ flashcards }: { flashcards: Flashcard[] }) {
         >
           {/* Front */}
           <div
-            className="absolute inset-0 rounded-2xl border border-[#ECEEF4] bg-white shadow-sm flex flex-col justify-between p-8"
-            style={{ backfaceVisibility: "hidden" }}
+            className="absolute inset-0 rounded-2xl flex flex-col justify-between p-8"
+            style={{
+              backfaceVisibility: "hidden",
+              background: "linear-gradient(145deg, #eef0ff 0%, #f4f5ff 100%)",
+              border: "1.5px solid #c5c9e8",
+              boxShadow: "0 16px 48px rgba(66, 85, 255, 0.14), 0 4px 16px rgba(66, 85, 255, 0.10)",
+            }}
           >
             <div className="flex justify-between items-start">
-              <Badge className="bg-[#EEF0FB] text-[#5C6BC0] border-0 text-[10px] font-bold uppercase tracking-wider">
+              <Badge className="bg-[#4255ff] text-white border-0 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1">
                 Question
               </Badge>
               <span className="text-xs text-[#8D92A8]">
@@ -257,8 +263,9 @@ function FlashcardsTab({ flashcards }: { flashcards: Flashcard[] }) {
             <div className="text-xl font-bold text-[#15172B] leading-snug tracking-tight text-center px-4">
               {current.front}
             </div>
-            <div className="text-xs text-[#8D92A8] flex items-center gap-1">
-              Click to reveal answer · Space / ← →
+            <div className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: "#4255ff", opacity: 0.7 }}>
+              <RotateCcw size={11} />
+              Tap card to reveal answer
             </div>
           </div>
 
