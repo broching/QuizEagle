@@ -57,4 +57,10 @@ export default defineSchema({
       completedAt: v.number(),
       answers: v.array(v.number()),
     }).index("by_deck", ["deckId"]),
+
+    generationUsage: defineTable({
+      key: v.string(),         // "user:<clerkId>" or "ip:<address>"
+      count: v.number(),       // generations used in current 24h window
+      windowStart: v.number(), // unix ms when current window started
+    }).index("by_key", ["key"]),
   });

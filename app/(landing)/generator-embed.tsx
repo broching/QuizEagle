@@ -53,7 +53,8 @@ type GenerateResult = {
   quizQuestions: QuizResult[];
 };
 
-type Step = "idle" | "extracting" | "generating" | "done" | "error";
+type Step = "idle" | "extracting" | "generating" | "done" | "error" | "rate-limited";
+type RateLimitData = { isAuthenticated: boolean; resetAt: number };
 
 const LOADING_STEPS: { key: "extracting" | "generating"; label: string }[] = [
   { key: "extracting", label: "Extracting content..." },
@@ -439,6 +440,45 @@ function ResultView({ result, onGenerateAnother }: { result: GenerateResult; onG
   );
 }
 
+// ─── Rate limited view ────────────────────────────────────────────────────────
+
+function RateLimitedView({ data, onReset }: { data: RateLimitData; onReset: () => void }) {
+  const resetTime = new Date(data.resetAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return (
+    <div className="flex flex-col items-center gap-5 py-6 max-w-sm mx-auto text-center">
+      <div
+        className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
+        style={{ background: "#FEF3C7" }}
+      >
+        ⏳
+      </div>
+      <div>
+        <h3 className="text-lg font-extrabold text-[#15172B]">Daily limit reached</h3>
+        {data.isAuthenticated ? (
+          <p className="text-[#6A6F87] mt-2 text-sm leading-relaxed">
+            You&apos;ve used all your free generations for today. Come back after{" "}
+            <strong>{resetTime}</strong>, or upgrade to Premium for 50/day.
+          </p>
+        ) : (
+          <>
+            <p className="text-[#6A6F87] mt-2 text-sm leading-relaxed">
+              Free visitors get 3 generations per day. Create a free account for 10/day — no credit card needed.
+            </p>
+            <SignUpButton mode="modal">
+              <Button className="mt-4 bg-[#4255ff] hover:bg-[#3346ee] text-white gap-2 w-full">
+                Sign up free — 10 generations/day <ArrowRight size={15} />
+              </Button>
+            </SignUpButton>
+          </>
+        )}
+      </div>
+      <Button variant="ghost" size="sm" onClick={onReset} className="text-[#6A6F87] hover:text-[#4255ff]">
+        ← Go back
+      </Button>
+    </div>
+  );
+}
+
 // ─── Generator form ───────────────────────────────────────────────────────────
 
 const VALID_DOC_EXTS = ["pdf", "pptx", "ppt", "docx", "doc"];
@@ -454,7 +494,13 @@ function isValidVideo(file: File) {
   return VALID_VIDEO_EXTS.includes(ext);
 }
 
-function GeneratorForm({ onGenerate }: { onGenerate: (step: "extracting" | "generating", result?: GenerateResult, error?: string) => void }) {
+function GeneratorForm({
+  onGenerate,
+  onRateLimit,
+}: {
+  onGenerate: (step: "extracting" | "generating", result?: GenerateResult, error?: string) => void;
+  onRateLimit: (data: RateLimitData) => void;
+}) {
   const [activeTab, setActiveTab] = useState("document");
   const [docFile, setDocFile] = useState<File | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -562,6 +608,11 @@ function GeneratorForm({ onGenerate }: { onGenerate: (step: "extracting" | "gene
 
     try {
       const res = await fetchPromise;
+      if (res.status === 429) {
+        const data = await res.json().catch(() => ({}));
+        onRateLimit({ isAuthenticated: data.isAuthenticated ?? false, resetAt: data.resetAt ?? Date.now() + 86400000 });
+        return;
+      }
       if (res.status === 413) throw new Error("File is too large. Please use a smaller file.");
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -790,6 +841,7 @@ export default function GeneratorEmbed() {
   const [step, setStep] = useState<Step>("idle");
   const [result, setResult] = useState<GenerateResult | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
+  const [rateLimitData, setRateLimitData] = useState<RateLimitData | null>(null);
 
   function handleGenerate(currentStep: "extracting" | "generating", data?: GenerateResult, error?: string) {
     if (error) {
@@ -805,8 +857,17 @@ export default function GeneratorEmbed() {
     setStep(currentStep);
   }
 
+  function handleRateLimit(data: RateLimitData) {
+    setRateLimitData(data);
+    setStep("rate-limited");
+  }
+
   if (step === "extracting" || step === "generating") {
     return <LoadingState currentStep={step} />;
+  }
+
+  if (step === "rate-limited" && rateLimitData) {
+    return <RateLimitedView data={rateLimitData} onReset={() => { setStep("idle"); setRateLimitData(null); }} />;
   }
 
   if (step === "error") {
@@ -830,5 +891,5 @@ export default function GeneratorEmbed() {
     return <ResultView result={result} onGenerateAnother={() => { setStep("idle"); setResult(null); }} />;
   }
 
-  return <GeneratorForm onGenerate={handleGenerate} />;
+  return <GeneratorForm onGenerate={handleGenerate} onRateLimit={handleRateLimit} />;
 }
