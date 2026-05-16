@@ -183,15 +183,13 @@ function DeckCard({
               Shared
             </Badge>
           )}
-          {deck.isShared && (deck.viewCount ?? 0) > 0 && (
-            <Badge
-              variant="secondary"
-              className="gap-1 text-xs bg-[#F7F8FB] text-[#6A6F87] border border-[#ECEEF4] font-semibold"
-            >
-              <Eye size={10} />
-              {deck.viewCount?.toLocaleString()} {deck.viewCount === 1 ? "view" : "views"}
-            </Badge>
-          )}
+          <Badge
+            variant="secondary"
+            className="gap-1 text-xs bg-[#F7F8FB] text-[#6A6F87] border border-[#ECEEF4] font-semibold"
+          >
+            <Eye size={10} />
+            {(deck.viewCount ?? 0).toLocaleString()} {(deck.viewCount ?? 0) === 1 ? "view" : "views"}
+          </Badge>
         </div>
       </CardContent>
 

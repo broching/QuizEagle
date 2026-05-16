@@ -79,13 +79,12 @@ export default function DeckPage({
             Share
           </Button>
         </div>
-        <p className="text-sm text-[#6A6F87] mt-1">
-          {deck.flashcardCount} flashcards · {deck.quizCount} quiz questions
-          {deck.isShared && (deck.viewCount ?? 0) > 0 && (
-            <span className="ml-3 inline-flex items-center gap-1 text-xs text-[#8D92A8]">
-              · <Eye size={12} className="inline" /> {(deck.viewCount ?? 0).toLocaleString()} {deck.viewCount === 1 ? "view" : "views"}
-            </span>
-          )}
+        <p className="text-sm text-[#6A6F87] mt-1 flex items-center gap-2 flex-wrap">
+          <span>{deck.flashcardCount} flashcards · {deck.quizCount} quiz questions</span>
+          <span className="inline-flex items-center gap-1 text-xs text-[#8D92A8]">
+            <Eye size={12} />
+            {(deck.viewCount ?? 0).toLocaleString()} {(deck.viewCount ?? 0) === 1 ? "view" : "views"}
+          </span>
         </p>
       </div>
 
