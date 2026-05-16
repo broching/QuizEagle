@@ -11,7 +11,7 @@ import { ChapterSidebar, ChapterSidebarContent } from "@/components/programs/cha
 import { ChapterContent } from "@/components/programs/chapter-content";
 import { ChatPanel } from "@/components/programs/chat-panel";
 import { GenerationProgress } from "@/components/programs/generation-progress";
-import { ArrowLeft, MessageCircle, X, LayoutList, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { ArrowLeft, MessageCircle, X, LayoutList, PanelLeftClose, PanelLeftOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -94,6 +94,11 @@ export default function ProgramPage({
   const isGenerating =
     program.status === "generating_outline" || program.status === "generating_chapters";
 
+  const readyChapters = (program.chapters ?? []).filter((c: { status: string }) => c.status === "ready");
+  const activeReadyIndex = readyChapters.findIndex((c: { _id: string }) => c._id === activeChapterId);
+  const prevChapter = activeReadyIndex > 0 ? readyChapters[activeReadyIndex - 1] : null;
+  const nextChapter = activeReadyIndex < readyChapters.length - 1 ? readyChapters[activeReadyIndex + 1] : null;
+
   const sidebarProps = {
     chapters: program.chapters ?? [],
     completedChapterIds,
@@ -124,6 +129,31 @@ export default function ProgramPage({
           <p className="text-xs font-bold text-[#5C6BC0] uppercase tracking-widest hidden sm:block">Study Program</p>
           <h1 className="text-sm font-bold text-[#15172B] truncate">{program.title}</h1>
         </div>
+
+        {/* Prev / Next chapter */}
+        {readyChapters.length > 1 && (
+          <div className="flex items-center gap-0.5 shrink-0">
+            <button
+              onClick={() => prevChapter && handleChapterSelect(prevChapter._id)}
+              disabled={!prevChapter}
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-[#6A6F87] hover:text-[#5C6BC0] hover:bg-[#EEF0FB] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              title="Previous chapter"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className="text-xs text-[#8D92A8] font-medium tabular-nums px-0.5">
+              {activeReadyIndex + 1}/{readyChapters.length}
+            </span>
+            <button
+              onClick={() => nextChapter && handleChapterSelect(nextChapter._id)}
+              disabled={!nextChapter}
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-[#6A6F87] hover:text-[#5C6BC0] hover:bg-[#EEF0FB] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              title="Next chapter"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        )}
 
         <Button
           variant="ghost"

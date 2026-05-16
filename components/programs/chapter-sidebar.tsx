@@ -139,7 +139,7 @@ export function ChapterSidebarContent({
                     <button
                       key={section.sectionNumber}
                       onClick={() => handleSectionClick(chapter._id, chapter.status, idx)}
-                      className="w-full text-left text-xs text-[#6A6F87] hover:text-[#5C6BC0] py-1.5 px-2 rounded-lg hover:bg-[#EEF0FB] transition-colors line-clamp-1 active:bg-[#EEF0FB]"
+                      className="w-full text-left text-xs text-[#6A6F87] hover:text-[#5C6BC0] py-1.5 px-2 rounded-lg hover:bg-[#EEF0FB] transition-colors leading-snug active:bg-[#EEF0FB]"
                     >
                       {section.sectionNumber}. {section.title}
                     </button>

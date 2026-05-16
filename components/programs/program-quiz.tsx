@@ -21,6 +21,11 @@ type Attempt = {
   completedAt: number;
 };
 
+// Strip AI-generated letter prefixes like "A. ", "A) ", "(A) " from option text
+function stripOptionPrefix(opt: string): string {
+  return opt.replace(/^\(?[A-Da-d][.)]\)?\s*/, "").trim();
+}
+
 export function ProgramQuiz({
   questions,
   attempts,
@@ -101,11 +106,11 @@ export function ProgramQuiz({
                 </div>
                 {!correct && (
                   <p className="text-xs text-[#D9534F] pl-6">
-                    Your answer: {q.options[userAnswer] ?? "—"}
+                    Your answer: {q.options[userAnswer] != null ? stripOptionPrefix(q.options[userAnswer]) : "—"}
                   </p>
                 )}
                 <p className="text-xs text-[#229155] pl-6">
-                  Correct: {q.options[q.correctIndex]}
+                  Correct: {stripOptionPrefix(q.options[q.correctIndex])}
                 </p>
                 <p className="text-xs text-[#6A6F87] pl-6 bg-[#F7F8FB] rounded-lg p-2">
                   {q.explanation}
@@ -173,7 +178,7 @@ export function ProgramQuiz({
                   <span className={cn("inline-flex w-5 h-5 rounded-full border items-center justify-center text-xs mr-2 shrink-0 align-middle", selected ? "border-[#5C6BC0] bg-[#5C6BC0] text-white" : "border-[#DCDEE7] text-[#6A6F87]")}>
                     {String.fromCharCode(65 + optIndex)}
                   </span>
-                  {opt}
+                  {stripOptionPrefix(opt)}
                 </button>
               );
             })}
