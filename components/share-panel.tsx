@@ -63,7 +63,10 @@ export function SharePanel({ deckId, isShared, shareToken, open, onOpenChange }:
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-sm rounded-2xl p-5">
+      <DialogContent
+        style={{ width: "min(calc(100vw - 2rem), 22rem)", maxWidth: "22rem" }}
+        className="rounded-2xl p-5 gap-0"
+      >
         <DialogHeader className="pb-1">
           <DialogTitle className="flex items-center gap-2 text-base" style={{ color: "#1a1d3b" }}>
             <Share2 size={16} style={{ color: "#4255ff" }} />
