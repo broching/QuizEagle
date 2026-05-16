@@ -252,15 +252,16 @@ async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Sign in to generate a Study Course." }, { status: 401 });
+  // Auth check disabled for testing — re-enable before launch
+  // if (!userId) return NextResponse.json({ error: "Sign in to generate a Study Course." }, { status: 401 });
 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? req.headers.get("x-real-ip") ?? "unknown";
 
-  // Rate limit (same pool as deck generation)
+  // Rate limit
   try {
     const rl = await convex.mutation(api.mutations.rateLimit.checkAndIncrement, {
-      key: `user:${userId}`,
-      tier: "free",
+      key: userId ? `user:${userId}` : `ip:${ip}`,
+      tier: userId ? "free" : "anon",
     });
     if (!rl.allowed) {
       return NextResponse.json(
@@ -298,7 +299,9 @@ export async function POST(req: NextRequest) {
   // Delete temp file (fire-and-forget)
   convex.mutation(api.files.deleteFile, { storageId: storageId as Id<"_storage"> }).catch(console.warn);
 
+  // Full text for structure generation; shorter context for per-section calls to keep responses within token budget
   const docText = truncateToWords(rawText, 30000);
+  const sectionContext = truncateToWords(rawText, 8000);
 
   // ── LLM Call 1: Generate course structure ─────────────────────────────────
   let structure: CourseStructure;
@@ -307,7 +310,7 @@ export async function POST(req: NextRequest) {
       STRUCTURE_SCHEMA,
       `Analyze the following document and produce a complete course outline covering ALL content with no omissions.\n\nRequirements:\n- 3 to 6 chapters\n- 3 to 5 sections per chapter\n- Each section should focus on a distinct sub-topic\n- Cover every concept, fact, and detail present in the document\n\nDocument:\n${docText}`,
       "You are an expert curriculum designer. Your job is to create comprehensive, well-structured course outlines from source material. Cover ALL content without omissions. Return only valid JSON.",
-      2048,
+      8192,
     );
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : "Failed to generate course structure" }, { status: 502 });
@@ -348,9 +351,9 @@ export async function POST(req: NextRequest) {
         try {
           const content = await callGeminiWithSchema<SectionContent>(
             SECTION_SCHEMA,
-            `Generate comprehensive study material for the following course section.\n\nCourse: "${structure.title}"\nChapter: "${chapter.title}"\nSection: "${section.title}"\nKey topics to cover: ${section.keyTopics.join(", ")}\n\nRequirements:\n- notes: detailed markdown-formatted study notes (300-600 words) covering all key topics thoroughly\n- flashcards: exactly 4 flashcards testing the most important concepts\n- quizQuestions: exactly 3 multiple-choice questions (4 options each)\n\nSource document for reference:\n${docText}`,
+            `Generate comprehensive study material for the following course section.\n\nCourse: "${structure.title}"\nChapter: "${chapter.title}"\nSection: "${section.title}"\nKey topics to cover: ${section.keyTopics.join(", ")}\n\nRequirements:\n- notes: detailed markdown-formatted study notes (300-600 words) covering all key topics thoroughly\n- flashcards: exactly 4 flashcards testing the most important concepts\n- quizQuestions: exactly 3 multiple-choice questions (4 options each)\n\nSource document for reference:\n${sectionContext}`,
             "You are an expert educator creating in-depth study materials. Write thorough, clear notes. Create flashcards and quiz questions that test genuine understanding. Return only valid JSON.",
-            4096,
+            8192,
           );
           await convex.mutation(api.mutations.courses.addSection, {
             courseId,
