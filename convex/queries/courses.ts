@@ -18,10 +18,10 @@ export const getCourse = query({
   args: { courseId: v.id("courses") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return null;
-
     const course = await ctx.db.get(args.courseId);
-    if (!course || course.userId !== identity.subject) return null;
+    if (!course) return null;
+    // Allow access if authenticated owner, or if course is anonymous (testing)
+    if (identity ? course.userId !== identity.subject : course.userId !== "anon") return null;
 
     const chapters = await ctx.db
       .query("courseChapters")
@@ -48,9 +48,9 @@ export const getCourseForChat = query({
   args: { courseId: v.id("courses") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return null;
     const course = await ctx.db.get(args.courseId);
-    if (!course || course.userId !== identity.subject) return null;
+    if (!course) return null;
+    if (identity ? course.userId !== identity.subject : course.userId !== "anon") return null;
     return { title: course.title, docText: course.docText };
   },
 });
@@ -59,9 +59,9 @@ export const getChatMessages = query({
   args: { courseId: v.id("courses") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
     const course = await ctx.db.get(args.courseId);
-    if (!course || course.userId !== identity.subject) return [];
+    if (!course) return [];
+    if (identity ? course.userId !== identity.subject : course.userId !== "anon") return [];
 
     const messages = await ctx.db
       .query("chatMessages")
@@ -77,10 +77,10 @@ export const getCourseProgress = query({
   args: { courseId: v.id("courses") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return null;
+    const userId = identity?.subject ?? "anon";
     return ctx.db
       .query("courseProgress")
-      .withIndex("by_course_user", (q) => q.eq("courseId", args.courseId).eq("userId", identity.subject))
+      .withIndex("by_course_user", (q) => q.eq("courseId", args.courseId).eq("userId", userId))
       .unique();
   },
 });

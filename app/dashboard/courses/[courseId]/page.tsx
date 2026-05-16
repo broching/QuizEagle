@@ -2,6 +2,7 @@
 
 import { useState, use } from "react";
 import { useQuery, useMutation } from "convex/react";
+import { useUser } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useRouter } from "next/navigation";
@@ -273,6 +274,7 @@ function SectionContent({
 export default function CoursePage({ params }: { params: Promise<{ courseId: string }> }) {
   const { courseId } = use(params);
   const router = useRouter();
+  const { isSignedIn } = useUser();
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
   const [chatOpen, setChatOpen] = useState(false);
@@ -303,7 +305,12 @@ export default function CoursePage({ params }: { params: Promise<{ courseId: str
 
   async function handleMarkComplete(sectionId: string) {
     try {
-      await markComplete({ courseId: courseId as Id<"courses">, sectionId });
+      await markComplete({
+        courseId: courseId as Id<"courses">,
+        sectionId,
+        // Pass "anon" for unauthenticated testing; remove once auth is enforced
+        ...(!isSignedIn && { serverUserId: "anon" }),
+      });
       toast.success("Section marked complete!");
     } catch {
       toast.error("Failed to save progress.");
