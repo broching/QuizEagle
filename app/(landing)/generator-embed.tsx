@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -508,10 +509,13 @@ function GeneratorForm({
   const [videoDragging, setVideoDragging] = useState(false);
   const [numFlashcards, setNumFlashcards] = useState(10);
   const [numQuiz, setNumQuiz] = useState(5);
+  const [turnstileToken, setTurnstileToken] = useState("");
   const docInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const turnstileRef = useRef<TurnstileInstance>(null);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const { isSignedIn } = useAuth();
+  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   const handleDocDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -601,7 +605,7 @@ function GeneratorForm({
     const fetchPromise = fetch("/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...body, numFlashcards, numQuiz }),
+      body: JSON.stringify({ ...body, numFlashcards, numQuiz, turnstileToken }),
     });
 
     onGenerate("generating");
@@ -624,6 +628,9 @@ function GeneratorForm({
       const msg = err instanceof Error ? err.message : "Something went wrong. Please try again.";
       toast.error(msg);
       onGenerate("generating", undefined, msg);
+    } finally {
+      turnstileRef.current?.reset();
+      setTurnstileToken("");
     }
   }
 
@@ -823,9 +830,20 @@ function GeneratorForm({
         </div>
       )}
 
+      {siteKey && (
+        <Turnstile
+          ref={turnstileRef}
+          siteKey={siteKey}
+          onSuccess={setTurnstileToken}
+          onExpire={() => setTurnstileToken("")}
+          onError={() => setTurnstileToken("")}
+          options={{ size: "flexible", theme: "light" }}
+        />
+      )}
+
       <Button
         onClick={handleGenerate}
-        disabled={activeTab === "document" ? !docFile : !videoFile}
+        disabled={(activeTab === "document" ? !docFile : !videoFile) || (!!siteKey && !turnstileToken)}
         className="w-full bg-[#4255ff] hover:bg-[#3346ee] text-white h-11 text-sm font-semibold rounded-xl gap-2 disabled:opacity-40"
       >
         {activeTab === "document" ? <>Upload &amp; Generate</> : <>Upload &amp; Transcribe</>}
