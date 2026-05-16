@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { auth } from "@clerk/nextjs/server";
+
+const FREE_LIMIT = 10;
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -260,6 +263,37 @@ async function transcribeWithGroq(buffer: Buffer, fileName: string, mimeType: st
 }
 
 export async function POST(req: NextRequest) {
+  // ── Rate limiting ─────────────────────────────────────────────────────────
+  const { userId } = await auth();
+  const isAuthenticated = !!userId;
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+    req.headers.get("x-real-ip") ??
+    "unknown";
+
+  try {
+    const rl = await convex.mutation(api.mutations.rateLimit.checkAndIncrement, {
+      key: userId ? `user:${userId}` : `ip:${ip}`,
+      tier: userId ? "free" : "anon",
+    });
+    if (!rl.allowed) {
+      const resetIn = Math.ceil((rl.resetAt - Date.now()) / 1000 / 60);
+      return NextResponse.json(
+        {
+          error: isAuthenticated
+            ? `Daily limit reached (${rl.count}/${rl.limit}). Resets in ${resetIn} min.`
+            : `Daily limit reached. Sign up free for ${FREE_LIMIT} generations/day.`,
+          isAuthenticated,
+          limit: rl.limit,
+          resetAt: rl.resetAt,
+        },
+        { status: 429 }
+      );
+    }
+  } catch (err) {
+    console.error("Rate limit check failed, proceeding:", err); // fail-open
+  }
+
   let body: {
     sourceType: "document" | "video";
     storageId?: string;
