@@ -814,20 +814,13 @@ function GeneratorForm({
           </div>
         </div>
       ) : (
-        <div className="rounded-xl border border-[#e0e3f5] bg-[#f7f8ff] p-4 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#eef0ff] flex items-center justify-center shrink-0">
-            <Sliders size={16} className="text-[#4255ff]" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-[#1a1d3b]">Customize flashcard &amp; quiz count</p>
-            <p className="text-xs text-[#6b6f9a] mt-0.5">Sign up free to choose up to 20 of each.</p>
-          </div>
-          <SignUpButton mode="modal">
-            <button className="text-xs font-bold text-white bg-[#4255ff] hover:bg-[#3346ee] px-3 py-1.5 rounded-lg shrink-0 transition-colors">
-              Sign up free
-            </button>
-          </SignUpButton>
-        </div>
+        <SignUpButton mode="modal">
+          <button className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-[#4255ff] bg-[#eef0ff] hover:bg-[#e0e4ff] border border-[#c5c9e8] py-2 rounded-xl transition-colors">
+            <Sliders size={11} />
+            Sign up free to customize count
+            <ArrowRight size={11} />
+          </button>
+        </SignUpButton>
       )}
 
       {siteKey && (
