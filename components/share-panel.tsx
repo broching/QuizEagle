@@ -74,12 +74,12 @@ export function SharePanel({ deckId, isShared, shareToken, open, onOpenChange }:
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0 overflow-hidden">
           {isShared && shareUrl ? (
             <>
               {/* URL row */}
               <div
-                className="flex items-center gap-2 px-3 py-2.5 rounded-xl min-w-0"
+                className="flex items-center gap-2 px-3 py-2.5 rounded-xl overflow-hidden"
                 style={{ background: "#f0f2fc", border: "1px solid #e0e3f5" }}
               >
                 <Globe size={13} style={{ color: "#4255ff" }} className="shrink-0" />
