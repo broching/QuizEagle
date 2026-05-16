@@ -47,6 +47,30 @@ export const posts: Post[] = [
     date: "2025-05-12",
     readTime: "5 min read",
   },
+  {
+    slug: "spaced-repetition-vs-cramming",
+    title: "Spaced Repetition vs Cramming: Which Study Method Actually Works?",
+    description:
+      "Cramming might feel productive, but the science is clear: spaced repetition leads to far better long-term retention. Here's what the research says and how to use it.",
+    date: "2025-05-15",
+    readTime: "6 min read",
+  },
+  {
+    slug: "ai-exam-preparation",
+    title: "How to Use AI to Prepare for Exams in 2025 (Step-by-Step Guide)",
+    description:
+      "AI can now do in seconds what used to take hours of prep work. Here's a practical, step-by-step guide to using AI tools to study smarter before your next exam.",
+    date: "2025-05-17",
+    readTime: "7 min read",
+  },
+  {
+    slug: "youtube-to-flashcards",
+    title: "How to Turn YouTube Videos into Flashcards (Without Taking Notes)",
+    description:
+      "Watching a lecture on YouTube doesn't have to mean furious note-taking. Learn how to convert any YouTube video into a full flashcard deck automatically.",
+    date: "2025-05-20",
+    readTime: "5 min read",
+  },
 ];
 
 export function getPost(slug: string): Post | undefined {
