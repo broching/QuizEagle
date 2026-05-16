@@ -14,18 +14,22 @@ type Chapter = {
   sections: Section[];
 };
 
-export function ChapterSidebar({
+export function ChapterSidebarContent({
   chapters,
   completedChapterIds,
   totalChapters,
   activeChapterId,
   onSelectChapter,
+  onSectionSelect,
+  onClose,
 }: {
   chapters: Chapter[];
   completedChapterIds: string[];
   totalChapters?: number;
   activeChapterId: string | null;
   onSelectChapter: (id: string) => void;
+  onSectionSelect?: (sectionIndex: number) => void;
+  onClose?: () => void;
 }) {
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(
     activeChapterId ? new Set([activeChapterId]) : new Set()
@@ -48,12 +52,21 @@ export function ChapterSidebar({
     if (status !== "ready") return;
     onSelectChapter(id);
     setExpandedChapters(prev => new Set([...prev, id]));
+    onClose?.();
+  };
+
+  const handleSectionClick = (chapterId: string, status: Chapter["status"], sectionIndex: number) => {
+    if (status !== "ready") return;
+    onSelectChapter(chapterId);
+    setExpandedChapters(prev => new Set([...prev, chapterId]));
+    onSectionSelect?.(sectionIndex);
+    onClose?.();
   };
 
   return (
-    <div className="w-72 shrink-0 flex flex-col border-r border-[#ECEEF4] bg-white overflow-hidden">
+    <div className="flex flex-col h-full">
       {/* Progress header */}
-      <div className="px-4 py-4 border-b border-[#ECEEF4]">
+      <div className="px-4 py-4 border-b border-[#ECEEF4] shrink-0">
         <div className="flex items-center justify-between mb-2">
           <p className="text-xs font-bold text-[#6A6F87] uppercase tracking-wider">Progress</p>
           <span className="text-xs font-bold text-[#5C6BC0]">{pct}%</span>
@@ -90,7 +103,6 @@ export function ChapterSidebar({
                   !isReady && "cursor-default"
                 )}
               >
-                {/* Status icon */}
                 <span className="shrink-0 mt-0.5">
                   {chapter.status === "generating" ? (
                     <Loader2 size={15} className="animate-spin text-[#5C6BC0]" />
@@ -123,11 +135,11 @@ export function ChapterSidebar({
               {/* Sections */}
               {isExpanded && chapter.sections.length > 0 && (
                 <div className="pl-10 pr-4 pb-2 space-y-0.5">
-                  {chapter.sections.map(section => (
+                  {chapter.sections.map((section, idx) => (
                     <button
                       key={section.sectionNumber}
-                      onClick={() => handleSelect(chapter._id, chapter.status)}
-                      className="w-full text-left text-xs text-[#6A6F87] hover:text-[#5C6BC0] py-1 px-2 rounded-lg hover:bg-[#EEF0FB] transition-colors line-clamp-1"
+                      onClick={() => handleSectionClick(chapter._id, chapter.status, idx)}
+                      className="w-full text-left text-xs text-[#6A6F87] hover:text-[#5C6BC0] py-1.5 px-2 rounded-lg hover:bg-[#EEF0FB] transition-colors line-clamp-1 active:bg-[#EEF0FB]"
                     >
                       {section.sectionNumber}. {section.title}
                     </button>
@@ -145,6 +157,15 @@ export function ChapterSidebar({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// Desktop sidebar wrapper
+export function ChapterSidebar(props: React.ComponentProps<typeof ChapterSidebarContent>) {
+  return (
+    <div className="hidden md:flex w-64 lg:w-72 shrink-0 flex-col border-r border-[#ECEEF4] bg-white overflow-hidden">
+      <ChapterSidebarContent {...props} />
     </div>
   );
 }

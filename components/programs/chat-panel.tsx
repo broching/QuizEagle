@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Send, Bot, Loader2, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function ChatPanel({ programId }: { programId: string }) {
+export function ChatPanel({ programId, embedded = false }: { programId: string; embedded?: boolean }) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -25,24 +25,19 @@ export function ChatPanel({ programId }: { programId: string }) {
   const handleSend = async () => {
     const message = input.trim();
     if (!message || isLoading) return;
-
     setInput("");
     setIsLoading(true);
-
     try {
       const history = (chatHistory ?? []).slice(-10).map(m => ({
         role: m.role,
         content: m.content,
       }));
-
       await fetch("/api/programs/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ programId, message, chatHistory: history }),
       });
-    } catch {
-      // error silently — Convex real-time will not update
-    } finally {
+    } catch { /* silent */ } finally {
       setIsLoading(false);
       inputRef.current?.focus();
     }
@@ -56,17 +51,22 @@ export function ChatPanel({ programId }: { programId: string }) {
   };
 
   return (
-    <div className="w-80 shrink-0 flex flex-col border-l border-[#ECEEF4] bg-white">
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-[#ECEEF4] flex items-center gap-2">
-        <div className="w-7 h-7 rounded-lg bg-[#EEF0FB] flex items-center justify-center">
-          <Bot size={14} className="text-[#5C6BC0]" />
+    <div className={embedded
+      ? "flex flex-col h-full bg-white"
+      : "w-72 lg:w-80 shrink-0 flex flex-col border-l border-[#ECEEF4] bg-white"
+    }>
+      {/* Desktop header (hidden when embedded inside a Sheet) */}
+      {!embedded && (
+        <div className="px-4 py-3 border-b border-[#ECEEF4] flex items-center gap-2 shrink-0">
+          <div className="w-7 h-7 rounded-lg bg-[#EEF0FB] flex items-center justify-center">
+            <Bot size={14} className="text-[#5C6BC0]" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-[#15172B]">Study Assistant</p>
+            <p className="text-xs text-[#8D92A8]">Ask about the document</p>
+          </div>
         </div>
-        <div>
-          <p className="text-sm font-bold text-[#15172B]">Study Assistant</p>
-          <p className="text-xs text-[#8D92A8]">Ask about the document</p>
-        </div>
-      </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
@@ -78,7 +78,7 @@ export function ChatPanel({ programId }: { programId: string }) {
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-3">
             <MessageCircle size={28} className="text-[#DCDEE7]" />
             <p className="text-xs text-[#8D92A8]">
-              Ask me anything about your study material. I'll answer based on your document.
+              Ask me anything about your study material. I&apos;ll answer based on your document.
             </p>
           </div>
         ) : (
@@ -86,10 +86,7 @@ export function ChatPanel({ programId }: { programId: string }) {
             {chatHistory.map(msg => (
               <div
                 key={msg._id}
-                className={cn(
-                  "flex flex-col gap-1",
-                  msg.role === "user" ? "items-end" : "items-start"
-                )}
+                className={cn("flex flex-col gap-1", msg.role === "user" ? "items-end" : "items-start")}
               >
                 <div
                   className={cn(
@@ -118,7 +115,7 @@ export function ChatPanel({ programId }: { programId: string }) {
       </div>
 
       {/* Input */}
-      <div className="px-3 py-3 border-t border-[#ECEEF4]">
+      <div className="px-3 py-3 border-t border-[#ECEEF4] shrink-0">
         <div className="flex gap-2 items-end">
           <textarea
             ref={inputRef}
@@ -135,7 +132,7 @@ export function ChatPanel({ programId }: { programId: string }) {
             disabled={!input.trim() || isLoading}
             className="h-9 w-9 p-0 bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white shrink-0"
           >
-            <Send size={14} />
+            {isLoading ? <Loader2 size={13} className="animate-spin" /> : <Send size={14} />}
           </Button>
         </div>
         <p className="text-xs text-[#8D92A8] mt-1.5">Enter to send · Shift+Enter for new line</p>

@@ -6,11 +6,12 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { ChapterSidebar } from "@/components/programs/chapter-sidebar";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { ChapterSidebar, ChapterSidebarContent } from "@/components/programs/chapter-sidebar";
 import { ChapterContent } from "@/components/programs/chapter-content";
 import { ChatPanel } from "@/components/programs/chat-panel";
 import { GenerationProgress } from "@/components/programs/generation-progress";
-import { ArrowLeft, MessageCircle, X } from "lucide-react";
+import { ArrowLeft, MessageCircle, X, LayoutList } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -22,7 +23,9 @@ export default function ProgramPage({
   const { programId } = use(params);
   const [activeChapterId, setActiveChapterId] = useState<string | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [completedChapterIds, setCompletedChapterIds] = useState<string[]>([]);
+  const [targetSectionIndex, setTargetSectionIndex] = useState<number | null>(null);
 
   const program = useQuery(api.queries.studyPrograms.getProgram, {
     programId: programId as Id<"studyPrograms">,
@@ -32,30 +35,39 @@ export default function ProgramPage({
     programId: programId as Id<"studyPrograms">,
   });
 
-  // Sync completed chapters from DB
   useEffect(() => {
     if (progress?.completedChapterIds) {
       setCompletedChapterIds(progress.completedChapterIds);
     }
   }, [progress?.completedChapterIds]);
 
-  // Auto-select first ready chapter
   useEffect(() => {
     if (!activeChapterId && program?.chapters) {
-      const firstReady = program.chapters.find(c => c.status === "ready");
+      const firstReady = program.chapters.find((c: { status: string }) => c.status === "ready");
       if (firstReady) setActiveChapterId(firstReady._id);
     }
   }, [program?.chapters, activeChapterId]);
 
+  const handleSectionSelect = (sectionIndex: number) => {
+    setTargetSectionIndex(sectionIndex);
+    setMobileSidebarOpen(false);
+  };
+
+  const handleChapterSelect = (id: string) => {
+    setActiveChapterId(id);
+    // Reset section target when switching chapters
+    setTargetSectionIndex(null);
+  };
+
   if (program === undefined) {
     return (
       <div className="flex h-[calc(100vh-64px)]">
-        <div className="w-72 border-r border-[#ECEEF4] bg-white p-4 space-y-3">
+        <div className="hidden md:block w-64 border-r border-[#ECEEF4] bg-white p-4 space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="h-10 rounded-xl" />
           ))}
         </div>
-        <div className="flex-1 p-8 space-y-4">
+        <div className="flex-1 p-6 space-y-4">
           <Skeleton className="h-8 w-64" />
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-5/6" />
@@ -82,41 +94,84 @@ export default function ProgramPage({
   const isGenerating =
     program.status === "generating_outline" || program.status === "generating_chapters";
 
+  const sidebarProps = {
+    chapters: program.chapters ?? [],
+    completedChapterIds,
+    totalChapters: program.totalChapters,
+    activeChapterId,
+    onSelectChapter: handleChapterSelect,
+    onSectionSelect: handleSectionSelect,
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden">
       {/* Top bar */}
-      <div className="flex items-center gap-3 px-4 py-2.5 border-b border-[#ECEEF4] bg-white shrink-0">
-        <Link href="/dashboard" className="text-[#6A6F87] hover:text-[#5C6BC0] transition-colors">
+      <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5 border-b border-[#ECEEF4] bg-white shrink-0">
+        <Link href="/dashboard" className="text-[#6A6F87] hover:text-[#5C6BC0] transition-colors p-1">
           <ArrowLeft size={18} />
         </Link>
+
+        {/* Mobile: chapters button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setMobileSidebarOpen(true)}
+          className="md:hidden gap-1.5 text-[#6A6F87] hover:text-[#5C6BC0] hover:bg-[#EEF0FB] h-8 px-2"
+        >
+          <LayoutList size={15} />
+          <span className="text-xs font-semibold">Chapters</span>
+        </Button>
+
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-bold text-[#5C6BC0] uppercase tracking-widest">Study Program</p>
+          <p className="text-xs font-bold text-[#5C6BC0] uppercase tracking-widest hidden sm:block">Study Program</p>
           <h1 className="text-sm font-bold text-[#15172B] truncate">{program.title}</h1>
         </div>
+
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setChatOpen(o => !o)}
           className={cn(
-            "gap-1.5 text-sm h-8",
+            "gap-1.5 text-sm h-8 px-2 sm:px-3",
             chatOpen ? "text-[#5C6BC0] bg-[#EEF0FB]" : "text-[#6A6F87] hover:text-[#5C6BC0] hover:bg-[#EEF0FB]"
           )}
         >
           {chatOpen ? <X size={15} /> : <MessageCircle size={15} />}
-          {chatOpen ? "Close chat" : "Chat"}
+          <span className="text-xs font-semibold">{chatOpen ? "Close" : "Chat"}</span>
         </Button>
       </div>
 
-      {/* Main 3-panel layout */}
+      {/* Mobile sidebar sheet */}
+      <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+        <SheetContent side="left" className="w-[85vw] max-w-sm p-0 flex flex-col">
+          <SheetHeader className="px-4 pt-4 pb-0 shrink-0">
+            <SheetTitle className="text-sm font-bold text-[#15172B] text-left">Chapters</SheetTitle>
+          </SheetHeader>
+          <div className="flex-1 overflow-hidden">
+            <ChapterSidebarContent
+              {...sidebarProps}
+              onClose={() => setMobileSidebarOpen(false)}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Chat sheet on mobile */}
+      <Sheet open={chatOpen && typeof window !== "undefined" && window.innerWidth < 768} onOpenChange={(open) => !open && setChatOpen(false)}>
+        <SheetContent side="right" className="w-full max-w-sm p-0 flex flex-col">
+          <SheetHeader className="px-4 pt-4 pb-2 shrink-0 border-b border-[#ECEEF4]">
+            <SheetTitle className="text-sm font-bold text-[#15172B] text-left">Study Assistant</SheetTitle>
+          </SheetHeader>
+          <div className="flex-1 overflow-hidden">
+            <ChatPanel programId={programId} embedded />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Main layout */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left sidebar */}
-        <ChapterSidebar
-          chapters={program.chapters ?? []}
-          completedChapterIds={completedChapterIds}
-          totalChapters={program.totalChapters}
-          activeChapterId={activeChapterId}
-          onSelectChapter={setActiveChapterId}
-        />
+        {/* Desktop sidebar */}
+        <ChapterSidebar {...sidebarProps} />
 
         {/* Main content */}
         <div className="flex-1 overflow-y-auto">
@@ -133,15 +188,13 @@ export default function ProgramPage({
                 <p className="text-sm text-[#6A6F87] mt-1">{program.errorMessage ?? "An error occurred during generation."}</p>
               </div>
               <Link href="/dashboard/programs/new">
-                <Button className="bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white">
-                  Try Again
-                </Button>
+                <Button className="bg-[#5C6BC0] hover:bg-[#4F5BAE] text-white">Try Again</Button>
               </Link>
             </div>
           ) : (
-            <div className="max-w-3xl mx-auto px-6 py-8">
+            <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
               {isGenerating && program.completedChapters < (program.totalChapters ?? 1) && (
-                <div className="mb-6 rounded-xl bg-[#EEF0FB] border border-[#C5CCEC] px-4 py-3 text-sm text-[#5C6BC0] font-medium flex items-center gap-2">
+                <div className="mb-5 rounded-xl bg-[#EEF0FB] border border-[#C5CCEC] px-4 py-3 text-sm text-[#5C6BC0] font-medium flex items-center gap-2">
                   <span className="inline-block w-2 h-2 rounded-full bg-[#5C6BC0] animate-pulse" />
                   Generating chapters... ({program.completedChapters}/{program.totalChapters ?? "?"} complete)
                 </div>
@@ -155,13 +208,19 @@ export default function ProgramPage({
                     prev.includes(id) ? prev : [...prev, id]
                   );
                 }}
+                targetSectionIndex={targetSectionIndex}
+                onSectionScrolled={() => setTargetSectionIndex(null)}
               />
             </div>
           )}
         </div>
 
-        {/* Right chat panel */}
-        {chatOpen && <ChatPanel programId={programId} />}
+        {/* Desktop chat panel */}
+        {chatOpen && (
+          <div className="hidden md:flex">
+            <ChatPanel programId={programId} />
+          </div>
+        )}
       </div>
     </div>
   );

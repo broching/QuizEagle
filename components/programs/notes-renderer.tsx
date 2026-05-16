@@ -6,6 +6,10 @@ type NoteSection = {
   keyPoints: string[];
 };
 
+export function sectionElementId(index: number) {
+  return `notes-section-${index}`;
+}
+
 export function NotesRenderer({ notes }: { notes: string }) {
   let sections: NoteSection[] = [];
   try {
@@ -19,7 +23,7 @@ export function NotesRenderer({ notes }: { notes: string }) {
   return (
     <div className="space-y-8">
       {sections.map((section, i) => (
-        <div key={i} className="space-y-3">
+        <div key={i} id={sectionElementId(i)} className="space-y-3 scroll-mt-6">
           <h3 className="text-base font-bold text-[#15172B] border-b border-[#ECEEF4] pb-2">
             {section.sectionTitle}
           </h3>

@@ -3,11 +3,10 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { NotesRenderer } from "./notes-renderer";
+import { NotesRenderer, sectionElementId } from "./notes-renderer";
 import { ProgramFlashcards } from "./program-flashcards";
 import { ProgramQuiz } from "./program-quiz";
 import { ChapterGeneratingIndicator } from "./generation-progress";
@@ -15,20 +14,27 @@ import { CheckCircle, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+type Tab = "notes" | "flashcards" | "quiz";
+
 export function ChapterContent({
   programId,
   chapterId,
   completedChapterIds,
   onChapterComplete,
+  targetSectionIndex,
+  onSectionScrolled,
 }: {
   programId: string;
   chapterId: string | null;
   completedChapterIds: string[];
   onChapterComplete: (chapterId: string) => void;
+  targetSectionIndex?: number | null;
+  onSectionScrolled?: () => void;
 }) {
-  const [activeTab, setActiveTab] = useState("notes");
+  const [activeTab, setActiveTab] = useState<Tab>("notes");
   const markComplete = useMutation(api.mutations.studyPrograms.markChapterComplete);
   const saveAttempt = useMutation(api.mutations.studyPrograms.saveQuizAttempt);
+  const prevSectionIndex = useRef<number | null | undefined>(null);
 
   const content = useQuery(
     api.queries.studyPrograms.getChapterContent,
@@ -38,6 +44,28 @@ export function ChapterContent({
     api.queries.studyPrograms.getQuizAttempts,
     chapterId ? { chapterId: chapterId as Id<"studyChapters"> } : "skip"
   );
+
+  // Scroll to section when targetSectionIndex changes
+  useEffect(() => {
+    if (targetSectionIndex == null || targetSectionIndex === prevSectionIndex.current) return;
+    prevSectionIndex.current = targetSectionIndex;
+
+    const doScroll = () => {
+      const el = document.getElementById(sectionElementId(targetSectionIndex));
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        onSectionScrolled?.();
+      }
+    };
+
+    if (activeTab !== "notes") {
+      setActiveTab("notes");
+      // Wait for tab content to render before scrolling
+      requestAnimationFrame(() => requestAnimationFrame(doScroll));
+    } else {
+      requestAnimationFrame(doScroll);
+    }
+  }, [targetSectionIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!chapterId) {
     return (
@@ -119,98 +147,88 @@ export function ChapterContent({
     }
   };
 
+  const tabs: { value: Tab; label: string }[] = [
+    { value: "notes", label: "Notes" },
+    { value: "flashcards", label: `Flashcards (${content.flashcards.length})` },
+    { value: "quiz", label: `Quiz (${content.quizQuestions.length})` },
+  ];
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
+    <div className="space-y-5">
+      <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-bold text-[#5C6BC0] uppercase tracking-widest mb-1">
             Chapter {content.chapter.chapterNumber}
           </p>
-          <h2 className="text-2xl font-extrabold text-[#15172B] tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-[#15172B] tracking-tight">
             {content.chapter.title}
           </h2>
         </div>
         {isCompleted ? (
           <div className="flex items-center gap-1.5 text-[#229155] text-sm font-semibold shrink-0 mt-1">
             <CheckCircle size={16} />
-            Complete
+            <span className="hidden sm:inline">Complete</span>
           </div>
         ) : (
           <Button
             size="sm"
             variant="outline"
             onClick={handleMarkComplete}
-            className="gap-1.5 border-[#e0e3f5] text-[#5C6BC0] hover:bg-[#EEF0FB] shrink-0 mt-1"
+            className="gap-1.5 border-[#e0e3f5] text-[#5C6BC0] hover:bg-[#EEF0FB] shrink-0 mt-1 text-xs"
           >
             <CheckCircle size={14} />
-            Mark Complete
+            <span className="hidden sm:inline">Mark Complete</span>
+            <span className="sm:hidden">Done</span>
           </Button>
         )}
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-white border border-[#e0e3f5] p-1.5 rounded-2xl h-auto w-full shadow-sm">
-          <TabsTrigger
-            value="notes"
+      {/* Custom tab bar — avoids shadcn's white indicator bug */}
+      <div className="bg-white border border-[#e0e3f5] p-1 rounded-2xl flex shadow-sm">
+        {tabs.map(tab => (
+          <button
+            key={tab.value}
+            onClick={() => setActiveTab(tab.value)}
             className={cn(
-              "flex-1 rounded-xl py-2 text-sm font-semibold transition-all",
-              activeTab === "notes"
+              "flex-1 rounded-xl py-2 px-2 text-xs sm:text-sm font-semibold transition-all",
+              activeTab === tab.value
                 ? "bg-[#5C6BC0] text-white shadow-sm"
                 : "text-[#6A6F87] hover:text-[#5C6BC0]"
             )}
           >
-            Notes
-          </TabsTrigger>
-          <TabsTrigger
-            value="flashcards"
-            className={cn(
-              "flex-1 rounded-xl py-2 text-sm font-semibold transition-all",
-              activeTab === "flashcards"
-                ? "bg-[#5C6BC0] text-white shadow-sm"
-                : "text-[#6A6F87] hover:text-[#5C6BC0]"
-            )}
-          >
-            Flashcards ({content.flashcards.length})
-          </TabsTrigger>
-          <TabsTrigger
-            value="quiz"
-            className={cn(
-              "flex-1 rounded-xl py-2 text-sm font-semibold transition-all",
-              activeTab === "quiz"
-                ? "bg-[#5C6BC0] text-white shadow-sm"
-                : "text-[#6A6F87] hover:text-[#5C6BC0]"
-            )}
-          >
-            Quiz ({content.quizQuestions.length})
-          </TabsTrigger>
-        </TabsList>
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-        <TabsContent value="notes" className="mt-6">
+      {/* Tab content */}
+      {activeTab === "notes" && (
+        <div>
           {content.chapter.notes ? (
             <NotesRenderer notes={content.chapter.notes} />
           ) : (
             <p className="text-sm text-[#6A6F87]">No notes available for this chapter.</p>
           )}
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="flashcards" className="mt-6">
-          <ProgramFlashcards
-            flashcards={content.flashcards}
-            onAllReviewed={() => {
-              toast.info("All flashcards reviewed! Consider marking the chapter as complete.");
-            }}
-          />
-        </TabsContent>
+      {activeTab === "flashcards" && (
+        <ProgramFlashcards
+          flashcards={content.flashcards}
+          onAllReviewed={() => {
+            toast.info("All flashcards reviewed! Consider marking the chapter as complete.");
+          }}
+        />
+      )}
 
-        <TabsContent value="quiz" className="mt-6">
-          <ProgramQuiz
-            questions={content.quizQuestions}
-            attempts={attempts ?? []}
-            onSubmit={handleQuizSubmit}
-            onAutoComplete={handleAutoComplete}
-          />
-        </TabsContent>
-      </Tabs>
+      {activeTab === "quiz" && (
+        <ProgramQuiz
+          questions={content.quizQuestions}
+          attempts={attempts ?? []}
+          onSubmit={handleQuizSubmit}
+          onAutoComplete={handleAutoComplete}
+        />
+      )}
     </div>
   );
 }
