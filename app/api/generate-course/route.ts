@@ -316,6 +316,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: err instanceof Error ? err.message : "Failed to generate course structure" }, { status: 502 });
   }
 
+  // Use authenticated userId when available; fall back to "anon" for unauthenticated testing
+  const serverUserId = userId ?? "anon";
+
   // ── Save course record (status: generating) ───────────────────────────────
   let courseId: Id<"courses">;
   try {
@@ -325,9 +328,11 @@ export async function POST(req: NextRequest) {
       sourceType: (sourceType === "video" ? "video" : fileName.endsWith(".pdf") ? "pdf" : "document") as "pdf" | "document" | "video",
       sourceFileName: fileName || undefined,
       docText,
+      serverUserId,
     });
   } catch (err) {
-    return NextResponse.json({ error: "Failed to save course" }, { status: 500 });
+    console.error("Failed to save course:", err);
+    return NextResponse.json({ error: `Failed to save course: ${err instanceof Error ? err.message : String(err)}` }, { status: 500 });
   }
 
   // ── LLM Calls 2-N: Generate section content ───────────────────────────────
@@ -342,8 +347,12 @@ export async function POST(req: NextRequest) {
         order: chIdx,
         title: chapter.title,
         description: chapter.description,
+        serverUserId,
       });
-    } catch { continue; }
+    } catch (err) {
+      console.error(`Failed to save chapter "${chapter.title}":`, err);
+      continue;
+    }
 
     // Generate all sections of this chapter in parallel
     await Promise.allSettled(
@@ -372,16 +381,18 @@ export async function POST(req: NextRequest) {
               correctIndex: Math.min(q.correctIndex, 3),
               explanation: q.explanation,
             })),
+            serverUserId,
           });
           totalSections++;
         } catch (err) {
           console.error(`Failed to generate section "${section.title}":`, err);
-          // Save empty section so the course structure is visible
+          // Save placeholder so the course structure is still visible
           try {
             await convex.mutation(api.mutations.courses.addSection, {
               courseId, chapterId, order: sIdx, title: section.title,
               notes: `*Content for this section could not be generated. Please try regenerating.*`,
               flashcards: [], quizQuestions: [],
+              serverUserId,
             });
             totalSections++;
           } catch { /* ignore */ }
@@ -392,7 +403,7 @@ export async function POST(req: NextRequest) {
 
   // ── Mark course ready ─────────────────────────────────────────────────────
   try {
-    await convex.mutation(api.mutations.courses.markCourseReady, { courseId, totalSections });
+    await convex.mutation(api.mutations.courses.markCourseReady, { courseId, totalSections, serverUserId });
   } catch (err) {
     console.error("Failed to mark course ready:", err);
   }

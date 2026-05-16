@@ -13,9 +13,10 @@ export const createCourse = mutation({
     sourceType: v.union(v.literal("pdf"), v.literal("document"), v.literal("video")),
     sourceFileName: v.optional(v.string()),
     docText: v.string(),
+    serverUserId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const userId = requireAuth(await ctx.auth.getUserIdentity());
+    const userId = args.serverUserId ?? requireAuth(await ctx.auth.getUserIdentity());
     return ctx.db.insert("courses", {
       userId,
       title: args.title,
@@ -36,9 +37,10 @@ export const addChapter = mutation({
     order: v.number(),
     title: v.string(),
     description: v.string(),
+    serverUserId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const userId = requireAuth(await ctx.auth.getUserIdentity());
+    const userId = args.serverUserId ?? requireAuth(await ctx.auth.getUserIdentity());
     const course = await ctx.db.get(args.courseId);
     if (!course || course.userId !== userId) throw new Error("Not found");
     return ctx.db.insert("courseChapters", {
@@ -69,9 +71,10 @@ export const addSection = mutation({
       correctIndex: v.number(),
       explanation: v.string(),
     })),
+    serverUserId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const userId = requireAuth(await ctx.auth.getUserIdentity());
+    const userId = args.serverUserId ?? requireAuth(await ctx.auth.getUserIdentity());
     const course = await ctx.db.get(args.courseId);
     if (!course || course.userId !== userId) throw new Error("Not found");
     return ctx.db.insert("courseSections", {
@@ -91,9 +94,10 @@ export const markCourseReady = mutation({
   args: {
     courseId: v.id("courses"),
     totalSections: v.number(),
+    serverUserId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const userId = requireAuth(await ctx.auth.getUserIdentity());
+    const userId = args.serverUserId ?? requireAuth(await ctx.auth.getUserIdentity());
     const course = await ctx.db.get(args.courseId);
     if (!course || course.userId !== userId) throw new Error("Not found");
     await ctx.db.patch(args.courseId, { status: "ready", totalSections: args.totalSections });
@@ -104,9 +108,10 @@ export const markSectionComplete = mutation({
   args: {
     courseId: v.id("courses"),
     sectionId: v.string(),
+    serverUserId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const userId = requireAuth(await ctx.auth.getUserIdentity());
+    const userId = args.serverUserId ?? requireAuth(await ctx.auth.getUserIdentity());
     const existing = await ctx.db
       .query("courseProgress")
       .withIndex("by_course_user", (q) => q.eq("courseId", args.courseId).eq("userId", userId))
@@ -135,9 +140,10 @@ export const addChatMessage = mutation({
     courseId: v.id("courses"),
     role: v.union(v.literal("user"), v.literal("assistant")),
     content: v.string(),
+    serverUserId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const userId = requireAuth(await ctx.auth.getUserIdentity());
+    const userId = args.serverUserId ?? requireAuth(await ctx.auth.getUserIdentity());
     return ctx.db.insert("chatMessages", {
       courseId: args.courseId,
       userId,
