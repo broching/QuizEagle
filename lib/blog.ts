@@ -71,6 +71,38 @@ export const posts: Post[] = [
     date: "2025-05-20",
     readTime: "5 min read",
   },
+  {
+    slug: "quizlet-alternative",
+    title: "Best Quizlet Alternatives in 2025 (Free & AI-Powered)",
+    description:
+      "Quizlet's free tier keeps shrinking. Here are the best alternatives — including free AI tools that generate flashcards automatically from any document.",
+    date: "2025-05-22",
+    readTime: "6 min read",
+  },
+  {
+    slug: "study-guide-from-pdf",
+    title: "How to Make a Study Guide from a PDF (Automated, Free)",
+    description:
+      "Stop spending hours manually pulling notes from PDFs. Here's how to turn any PDF into a structured study guide — with flashcards and a quiz — in under a minute.",
+    date: "2025-05-24",
+    readTime: "5 min read",
+  },
+  {
+    slug: "how-to-study-for-finals",
+    title: "How to Study for Finals in One Week (AI-Powered Game Plan)",
+    description:
+      "One week until finals and you haven't started? Here's a day-by-day plan that uses AI tools to compress weeks of prep into focused, high-retention study sessions.",
+    date: "2025-05-26",
+    readTime: "7 min read",
+  },
+  {
+    slug: "powerpoint-to-flashcards",
+    title: "How to Convert a PowerPoint into Flashcards Automatically",
+    description:
+      "Got a PPTX file and an exam coming up? Learn how to turn any PowerPoint presentation into a flashcard deck and quiz in seconds — no manual work required.",
+    date: "2025-05-28",
+    readTime: "5 min read",
+  },
 ];
 
 export function getPost(slug: string): Post | undefined {
