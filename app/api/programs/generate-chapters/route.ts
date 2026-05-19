@@ -4,6 +4,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { auth } from "@clerk/nextjs/server";
 import { callGeminiStructured, withKeyRotation } from "@/lib/gemini";
+import { captureAiGeneration } from "@/lib/posthog-server";
 
 export const maxDuration = 300;
 
@@ -152,9 +153,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No Gemini API keys configured" }, { status: 500 });
   }
 
+  const traceId = crypto.randomUUID();
+  const distinctId = userId;
+
   try {
     // LLM Call 1: Generate outline
-    const outline = await withKeyRotation(keys, (key) =>
+    const outlineStart = Date.now();
+    const { result: outline, inputTokens: oIn, outputTokens: oOut } = await withKeyRotation(keys, (key) =>
       callGeminiStructured<OutlineResult>(
         key,
         "You are an expert curriculum designer. Return ONLY valid JSON matching the exact schema. No markdown, no explanation.",
@@ -169,6 +174,16 @@ ${program.documentText}`,
         4096
       )
     );
+    captureAiGeneration({
+      distinctId,
+      model: "gemini-2.5-flash",
+      inputTokens: oIn,
+      outputTokens: oOut,
+      latencyMs: Date.now() - outlineStart,
+      generationType: "study_outline",
+      traceId,
+      programId,
+    });
 
     // Save outline, get chapter Convex IDs
     const chapterIdMap = await authedConvex.mutation(api.mutations.studyPrograms.saveChapterOutline, {
@@ -192,7 +207,8 @@ ${program.documentText}`,
       const chapterText = extractChapterText(program.documentText, chapter);
       const sectionList = chapter.sections.map(s => `  - Section ${s.sectionNumber}: ${s.title}`).join("\n");
 
-      const content = await withKeyRotation(keys, (key) =>
+      const chapterStart = Date.now();
+      const { result: content, inputTokens: cIn, outputTokens: cOut } = await withKeyRotation(keys, (key) =>
         callGeminiStructured<ChapterContent>(
           key,
           "You are an expert educator. Return ONLY valid JSON matching the exact schema. No markdown wrapper around the JSON, no code fences.",
@@ -218,6 +234,16 @@ ${chapterText}`,
           16384
         )
       );
+      captureAiGeneration({
+        distinctId,
+        model: "gemini-2.5-flash",
+        inputTokens: cIn,
+        outputTokens: cOut,
+        latencyMs: Date.now() - chapterStart,
+        generationType: "study_chapter",
+        traceId,
+        programId,
+      });
 
       await authedConvex.mutation(api.mutations.studyPrograms.saveChapterContent, {
         programId: programId as Id<"studyPrograms">,

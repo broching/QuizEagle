@@ -3,6 +3,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { auth } from "@clerk/nextjs/server";
+import { captureAiGeneration } from "@/lib/posthog-server";
 
 const FREE_LIMIT = 10;
 
@@ -141,7 +142,9 @@ function cleanJson(raw: string): string {
   return match ? match[0] : s;
 }
 
-async function callGemini(key: string, text: string, numFlashcards: number, numQuiz: number): Promise<GeminiResult> {
+async function callGemini(
+  key: string, text: string, numFlashcards: number, numQuiz: number
+): Promise<{ result: GeminiResult; inputTokens: number; outputTokens: number }> {
   const res = await fetch(`${GEMINI_ENDPOINT}?key=${key}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -181,6 +184,9 @@ async function callGemini(key: string, text: string, numFlashcards: number, numQ
   const raw: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!raw) throw new Error("Empty response from Gemini");
 
+  const inputTokens: number = data?.usageMetadata?.promptTokenCount ?? 0;
+  const outputTokens: number = data?.usageMetadata?.candidatesTokenCount ?? 0;
+
   const cleaned = cleanJson(raw);
   let parsed: GeminiResult;
   try {
@@ -189,7 +195,7 @@ async function callGemini(key: string, text: string, numFlashcards: number, numQ
     console.error("Gemini raw response:", raw);
     throw new Error("JSON_PARSE_FAILED");
   }
-  return parsed;
+  return { result: parsed, inputTokens, outputTokens };
 }
 
 function isRetryableError(err: unknown): boolean {
@@ -400,10 +406,16 @@ export async function POST(req: NextRequest) {
 
   const truncated = truncateToWords(text, 15000);
   let parsed: GeminiResult | null = null;
+  let totalInputTokens = 0;
+  let totalOutputTokens = 0;
 
+  const geminiStart = Date.now();
   for (let i = 0; i < keys.length; i++) {
     try {
-      parsed = await callGemini(keys[i], truncated, numFlashcards, numQuiz);
+      const { result, inputTokens, outputTokens } = await callGemini(keys[i], truncated, numFlashcards, numQuiz);
+      parsed = result;
+      totalInputTokens = inputTokens;
+      totalOutputTokens = outputTokens;
       console.log(`Gemini: used key index ${i}`);
       break;
     } catch (err) {
@@ -419,6 +431,15 @@ export async function POST(req: NextRequest) {
       { status: 503 }
     );
   }
+
+  captureAiGeneration({
+    distinctId: userId ?? `anon:${ip}`,
+    model: "gemini-2.5-flash",
+    inputTokens: totalInputTokens,
+    outputTokens: totalOutputTokens,
+    latencyMs: Date.now() - geminiStart,
+    generationType: "flashcard_deck",
+  });
 
   // Best-effort cleanup of temp file from Convex storage
   convex.mutation(api.files.deleteFile, { storageId: storageId as Id<"_storage"> }).catch((err) => {
