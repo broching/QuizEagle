@@ -31,7 +31,7 @@ export async function callGeminiStructured<T>(
   userPrompt: string,
   schema: object,
   maxOutputTokens = 8192
-): Promise<T> {
+): Promise<{ result: T; inputTokens: number; outputTokens: number }> {
   const res = await fetch(`${GEMINI_ENDPOINT}?key=${key}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -63,9 +63,12 @@ export async function callGeminiStructured<T>(
   const raw: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!raw) throw new Error("Empty response from Gemini");
 
+  const inputTokens: number = data?.usageMetadata?.promptTokenCount ?? 0;
+  const outputTokens: number = data?.usageMetadata?.candidatesTokenCount ?? 0;
+
   const cleaned = cleanJson(raw);
   try {
-    return JSON.parse(cleaned) as T;
+    return { result: JSON.parse(cleaned) as T, inputTokens, outputTokens };
   } catch {
     throw new Error("JSON_PARSE_FAILED");
   }
@@ -76,7 +79,7 @@ export async function callGeminiChat(
   systemPrompt: string,
   history: Array<{ role: "user" | "model"; parts: Array<{ text: string }> }>,
   userMessage: string
-): Promise<string> {
+): Promise<{ text: string; inputTokens: number; outputTokens: number }> {
   const contents = [
     ...history,
     { role: "user" as const, parts: [{ text: userMessage }] },
@@ -106,7 +109,11 @@ export async function callGeminiChat(
   const data = await res.json();
   const text: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) throw new Error("Empty response from Gemini");
-  return text;
+
+  const inputTokens: number = data?.usageMetadata?.promptTokenCount ?? 0;
+  const outputTokens: number = data?.usageMetadata?.candidatesTokenCount ?? 0;
+
+  return { text, inputTokens, outputTokens };
 }
 
 export async function withKeyRotation<T>(

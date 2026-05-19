@@ -25,6 +25,7 @@ import {
   BookOpen,
   Brain,
   Sliders,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -509,6 +510,13 @@ function GeneratorForm({
   const [videoDragging, setVideoDragging] = useState(false);
   const [numFlashcards, setNumFlashcards] = useState(10);
   const [numQuiz, setNumQuiz] = useState(5);
+  const [shakeFlashcards, setShakeFlashcards] = useState(false);
+  const [shakeQuiz, setShakeQuiz] = useState(false);
+
+  const triggerShake = (setter: (v: boolean) => void) => {
+    setter(true);
+    setTimeout(() => setter(false), 600);
+  };
   const [turnstileToken, setTurnstileToken] = useState("");
   const docInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -757,71 +765,103 @@ function GeneratorForm({
         </TabsContent>
       </Tabs>
 
-      {/* Count customization — requires account */}
-      {isSignedIn ? (
-        <div className="rounded-xl border border-[#e0e3f5] bg-[#f7f8ff] p-4 space-y-5">
-          <p className="text-xs font-bold text-[#1a1d3b] uppercase tracking-widest flex items-center gap-1.5">
-            <Sliders size={12} className="text-[#4255ff]" />
-            Customize
-          </p>
+      {/* Count customization */}
+      <div className="rounded-xl border border-[#e0e3f5] bg-[#f7f8ff] p-4 space-y-5">
+        <p className="text-xs font-bold text-[#1a1d3b] uppercase tracking-widest flex items-center gap-1.5">
+          <Sliders size={12} className="text-[#4255ff]" />
+          Customize
+        </p>
 
-          {/* Flashcard count slider */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-[#34384f] flex items-center gap-1.5">
-                <BookOpen size={12} className="text-[#4255ff]" /> Flashcards
-              </span>
-              <span className="text-lg font-extrabold text-[#4255ff] tabular-nums w-8 text-right">{numFlashcards}</span>
-            </div>
+        {/* Flashcard count slider */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-[#34384f] flex items-center gap-1.5">
+              <BookOpen size={12} className="text-[#4255ff]" /> Flashcards
+            </span>
+            <span className="text-lg font-extrabold text-[#4255ff] tabular-nums w-8 text-right">{numFlashcards}</span>
+          </div>
+          <div className="relative">
             <input
               type="range"
               min={5}
               max={20}
               value={numFlashcards}
-              onChange={(e) => setNumFlashcards(Number(e.target.value))}
+              onChange={isSignedIn ? (e) => setNumFlashcards(Number(e.target.value)) : () => {}}
               className="w-full cursor-pointer"
-              style={{ accentColor: "#4255ff" }}
+              style={{ accentColor: "#4255ff", pointerEvents: isSignedIn ? "auto" : "none" }}
             />
-            <div className="flex justify-between text-xs mt-1">
-              <span className="text-[#9499c0]">5</span>
-              <span className="text-[#d97706] font-semibold">🔒 Up to 50 with Premium</span>
-              <span className="text-[#9499c0]">20</span>
-            </div>
+            {!isSignedIn && (
+              <div
+                className="absolute inset-0 cursor-pointer"
+                onMouseDown={() => triggerShake(setShakeFlashcards)}
+                onTouchStart={() => triggerShake(setShakeFlashcards)}
+              />
+            )}
           </div>
+          <div className="flex justify-between text-xs mt-1">
+            <span className="text-[#9499c0]">5</span>
+            {isSignedIn ? (
+              <span className="text-[#d97706] font-semibold">🔒 Up to 50 with Premium</span>
+            ) : (
+              <SignUpButton mode="modal">
+                <button className="flex items-center gap-1 text-[#4255ff] font-semibold hover:underline">
+                  <Lock
+                    size={11}
+                    className={shakeFlashcards ? "animate-lock-shake" : ""}
+                  />
+                  Sign in to customize
+                </button>
+              </SignUpButton>
+            )}
+            <span className="text-[#9499c0]">20</span>
+          </div>
+        </div>
 
-          {/* Quiz count slider */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-[#34384f] flex items-center gap-1.5">
-                <Brain size={12} className="text-[#d97706]" /> Quiz questions
-              </span>
-              <span className="text-lg font-extrabold text-[#d97706] tabular-nums w-8 text-right">{numQuiz}</span>
-            </div>
+        {/* Quiz count slider */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-[#34384f] flex items-center gap-1.5">
+              <Brain size={12} className="text-[#d97706]" /> Quiz questions
+            </span>
+            <span className="text-lg font-extrabold text-[#d97706] tabular-nums w-8 text-right">{numQuiz}</span>
+          </div>
+          <div className="relative">
             <input
               type="range"
               min={3}
               max={20}
               value={numQuiz}
-              onChange={(e) => setNumQuiz(Number(e.target.value))}
+              onChange={isSignedIn ? (e) => setNumQuiz(Number(e.target.value)) : () => {}}
               className="w-full cursor-pointer"
-              style={{ accentColor: "#d97706" }}
+              style={{ accentColor: "#d97706", pointerEvents: isSignedIn ? "auto" : "none" }}
             />
-            <div className="flex justify-between text-xs mt-1">
-              <span className="text-[#9499c0]">3</span>
+            {!isSignedIn && (
+              <div
+                className="absolute inset-0 cursor-pointer"
+                onMouseDown={() => triggerShake(setShakeQuiz)}
+                onTouchStart={() => triggerShake(setShakeQuiz)}
+              />
+            )}
+          </div>
+          <div className="flex justify-between text-xs mt-1">
+            <span className="text-[#9499c0]">3</span>
+            {isSignedIn ? (
               <span className="text-[#d97706] font-semibold">🔒 Up to 50 with Premium</span>
-              <span className="text-[#9499c0]">20</span>
-            </div>
+            ) : (
+              <SignUpButton mode="modal">
+                <button className="flex items-center gap-1 text-[#4255ff] font-semibold hover:underline">
+                  <Lock
+                    size={11}
+                    className={shakeQuiz ? "animate-lock-shake" : ""}
+                  />
+                  Sign in to customize
+                </button>
+              </SignUpButton>
+            )}
+            <span className="text-[#9499c0]">20</span>
           </div>
         </div>
-      ) : (
-        <SignUpButton mode="modal">
-          <button className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-[#4255ff] bg-[#eef0ff] hover:bg-[#e0e4ff] border border-[#c5c9e8] py-2 rounded-xl transition-colors">
-            <Sliders size={11} />
-            Sign up free to customize count
-            <ArrowRight size={11} />
-          </button>
-        </SignUpButton>
-      )}
+      </div>
 
       {siteKey && (
         <Turnstile

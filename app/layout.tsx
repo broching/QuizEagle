@@ -35,7 +35,10 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Quiz Eagle" }],
   metadataBase: new URL("https://quizeagle.com"),
-  alternates: { canonical: "/" },
+  icons: {
+    icon: "/download.svg",
+    shortcut: "/download.svg",
+  },
   openGraph: {
     type: "website",
     siteName: "Quiz Eagle",

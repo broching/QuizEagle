@@ -4,6 +4,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { auth } from "@clerk/nextjs/server";
 import { callGeminiChat, withKeyRotation } from "@/lib/gemini";
+import { captureAiGeneration } from "@/lib/posthog-server";
 
 export const maxDuration = 60;
 
@@ -120,9 +121,20 @@ ${ragContext}`;
 
   let reply: string;
   try {
-    reply = await withKeyRotation(keys, (key) =>
+    const chatStart = Date.now();
+    const { text, inputTokens, outputTokens } = await withKeyRotation(keys, (key) =>
       callGeminiChat(key, systemPrompt, history, message)
     );
+    reply = text;
+    captureAiGeneration({
+      distinctId: userId,
+      model: "gemini-2.5-flash",
+      inputTokens,
+      outputTokens,
+      latencyMs: Date.now() - chatStart,
+      generationType: "study_chat",
+      programId,
+    });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Chat request failed";
     return NextResponse.json({ error: msg }, { status: 502 });

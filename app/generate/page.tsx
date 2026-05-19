@@ -1,6 +1,12 @@
-"use client";
-
+import type { Metadata } from "next";
 import GeneratorEmbed from "@/app/(landing)/generator-embed";
+
+export const metadata: Metadata = {
+  title: "Generate Flashcards & Quiz — Free AI Tool",
+  description:
+    "Upload a PDF, PPTX, DOCX, or video and get AI-generated flashcards and a quiz in under 30 seconds. Free, no sign-up required.",
+  alternates: { canonical: "https://quizeagle.com/generate" },
+};
 
 export default function GeneratePage() {
   return (
