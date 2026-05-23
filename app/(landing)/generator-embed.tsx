@@ -6,13 +6,14 @@ import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@clerk/nextjs";
-import { SignUpButton } from "@clerk/nextjs";
+import { SignUpButton, SignInButton } from "@clerk/nextjs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
   FileText,
   Video,
+  Youtube,
   Upload,
   ArrowRight,
   X,
@@ -26,6 +27,7 @@ import {
   Brain,
   Sliders,
   Lock,
+  Link,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -49,8 +51,9 @@ type QuizResult = {
 type GenerateResult = {
   title: string;
   summary: string;
-  sourceType: "document" | "video";
+  sourceType: "document" | "video" | "youtube";
   sourceFileName?: string;
+  sourceUrl?: string;
   flashcards: FlashcardResult[];
   quizQuestions: QuizResult[];
 };
@@ -358,6 +361,7 @@ function ResultView({ result, onGenerateAnother }: { result: GenerateResult; onG
         title: result.title,
         summary: result.summary,
         sourceType: result.sourceType,
+        sourceUrl: result.sourceUrl,
         sourceFileName: result.sourceFileName,
         flashcards: result.flashcards,
         quizQuestions: result.quizQuestions,
@@ -420,8 +424,8 @@ function ResultView({ result, onGenerateAnother }: { result: GenerateResult; onG
             <Brain size={11} />{result.quizQuestions.length} Quiz Questions
           </span>
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#eef0ff] text-xs font-medium text-[#6A6F87]">
-            {result.sourceType === "video" ? <Video size={11} /> : <FileText size={11} />}
-            {result.sourceType === "video" ? "Video" : result.sourceFileName ?? "Document"}
+            {result.sourceType === "youtube" ? <Youtube size={11} /> : result.sourceType === "video" ? <Video size={11} /> : <FileText size={11} />}
+            {result.sourceType === "youtube" ? "YouTube" : result.sourceType === "video" ? "Video" : result.sourceFileName ?? "Document"}
           </span>
         </div>
       </div>
@@ -485,6 +489,7 @@ function RateLimitedView({ data, onReset }: { data: RateLimitData; onReset: () =
 
 const VALID_DOC_EXTS = ["pdf", "pptx", "ppt", "docx", "doc"];
 const VALID_VIDEO_EXTS = ["mp4", "webm", "m4a", "wav", "mp3", "ogg", "mov"];
+const YOUTUBE_URL_RE = /(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
 
 function isValidDoc(file: File) {
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
@@ -494,6 +499,10 @@ function isValidDoc(file: File) {
 function isValidVideo(file: File) {
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
   return VALID_VIDEO_EXTS.includes(ext);
+}
+
+function isValidYoutubeUrl(url: string): boolean {
+  return YOUTUBE_URL_RE.test(url);
 }
 
 function GeneratorForm({
@@ -506,6 +515,8 @@ function GeneratorForm({
   const [activeTab, setActiveTab] = useState("document");
   const [docFile, setDocFile] = useState<File | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [youtubeUrlError, setYoutubeUrlError] = useState("");
   const [docDragging, setDocDragging] = useState(false);
   const [videoDragging, setVideoDragging] = useState(false);
   const [numFlashcards, setNumFlashcards] = useState(10);
@@ -584,28 +595,39 @@ function GeneratorForm({
         return;
       }
     } else {
-      if (!videoFile) {
-        toast.error("Please select a video or audio file.");
-        onGenerate("extracting", undefined, "Please select a video or audio file.");
-        return;
-      }
-      if (videoFile.size > 25 * 1024 * 1024) {
-        toast.error("Video must be under 25 MB.");
-        onGenerate("extracting", undefined, "Video must be under 25 MB.");
-        return;
-      }
-      try {
-        const storageId = await uploadToConvex(videoFile);
-        body = {
-          sourceType: "video",
-          storageId,
-          fileName: videoFile.name,
-          mimeType: videoFile.type || "video/mp4",
-        };
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : "Upload failed.";
-        toast.error(msg);
-        onGenerate("extracting", undefined, msg);
+      // Combined YouTube & Video tab
+      if (youtubeUrl.trim()) {
+        // YouTube URL mode
+        if (!isValidYoutubeUrl(youtubeUrl.trim())) {
+          setYoutubeUrlError("Please enter a valid YouTube URL (youtube.com or youtu.be).");
+          onGenerate("extracting", undefined, "Invalid YouTube URL.");
+          return;
+        }
+        body = { sourceType: "youtube", youtubeUrl: youtubeUrl.trim() };
+      } else if (videoFile) {
+        // Video file upload mode
+        if (videoFile.size > 25 * 1024 * 1024) {
+          toast.error("Video must be under 25 MB.");
+          onGenerate("extracting", undefined, "Video must be under 25 MB.");
+          return;
+        }
+        try {
+          const storageId = await uploadToConvex(videoFile);
+          body = {
+            sourceType: "video",
+            storageId,
+            fileName: videoFile.name,
+            mimeType: videoFile.type || "video/mp4",
+          };
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Upload failed.";
+          toast.error(msg);
+          onGenerate("extracting", undefined, msg);
+          return;
+        }
+      } else {
+        toast.error("Please enter a YouTube URL or select a video file.");
+        onGenerate("extracting", undefined, "Please enter a YouTube URL or select a video file.");
         return;
       }
     }
@@ -649,8 +671,8 @@ function GeneratorForm({
           <TabsTrigger value="document" className="flex-1 gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#4255ff] text-[#6A6F87] font-semibold px-3 py-2.5">
             <FileText size={15} />Document
           </TabsTrigger>
-          <TabsTrigger value="video" className="flex-1 gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#4255ff] text-[#6A6F87] font-semibold px-3 py-2.5">
-            <Video size={15} />Video
+          <TabsTrigger value="media" className="flex-1 gap-1.5 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#4255ff] text-[#6A6F87] font-semibold px-3 py-2.5">
+            <Youtube size={15} />YouTube & Video{!isSignedIn && <Lock size={11} className="ml-0.5 opacity-60" />}
           </TabsTrigger>
         </TabsList>
 
@@ -709,58 +731,114 @@ function GeneratorForm({
           </div>
         </TabsContent>
 
-        <TabsContent value="video">
-          <div className="bg-white rounded-2xl border border-[#e0e3f5] shadow-sm p-5">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-9 h-9 rounded-xl bg-[#eef0ff] flex items-center justify-center shrink-0">
-                <Video size={18} className="text-[#4255ff]" />
+        <TabsContent value="media">
+          <div className="relative">
+            {/* Content (dimmed when locked) */}
+            <div className={cn(!isSignedIn && "opacity-50 pointer-events-none select-none")}>
+              {/* YouTube URL section */}
+              <div className="bg-white rounded-2xl border border-[#e0e3f5] shadow-sm p-5 mb-3">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-9 h-9 rounded-xl bg-[#ffecec] flex items-center justify-center shrink-0">
+                    <Youtube size={18} className="text-[#FF0000]" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-[#15172B] text-sm">From a YouTube video</div>
+                    <div className="text-xs text-[#6A6F87]">Lecture, tutorial, or any YouTube video</div>
+                  </div>
+                </div>
+                <div className="relative">
+                  <Link size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8D92A8]" />
+                  <input
+                    type="url"
+                    placeholder="https://youtube.com/watch?v=..."
+                    value={youtubeUrl}
+                    onChange={(e) => { setYoutubeUrl(e.target.value); setYoutubeUrlError(""); if (e.target.value) setVideoFile(null); }}
+                    className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl border border-[#c5c9e8] bg-[#f9faff] focus:outline-none focus:border-[#4255ff] focus:ring-1 focus:ring-[#4255ff] placeholder:text-[#B6BAC9]"
+                  />
+                </div>
+                {youtubeUrlError && (
+                  <p className="text-red-500 text-xs mt-1.5">{youtubeUrlError}</p>
+                )}
               </div>
-              <div>
-                <div className="font-bold text-[#15172B] text-sm">From a video or audio file</div>
-                <div className="text-xs text-[#6A6F87]">Lecture, tutorial, or recorded class</div>
+
+              {/* Divider */}
+              <div className="flex items-center gap-3 my-3">
+                <div className="flex-1 border-t border-[#e0e3f5]" />
+                <span className="text-xs text-[#8D92A8] font-semibold">or upload a video file</span>
+                <div className="flex-1 border-t border-[#e0e3f5]" />
+              </div>
+
+              {/* Video upload section */}
+              <div className="bg-white rounded-2xl border border-[#e0e3f5] shadow-sm p-5">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-9 h-9 rounded-xl bg-[#eef0ff] flex items-center justify-center shrink-0">
+                    <Video size={18} className="text-[#4255ff]" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-[#15172B] text-sm">From a video or audio file</div>
+                    <div className="text-xs text-[#6A6F87]">Lecture, tutorial, or recorded class</div>
+                  </div>
+                </div>
+
+                {videoFile ? (
+                  <div className="border border-[#c5c9e8] rounded-xl p-4 bg-[#eef0ff] flex items-center gap-3">
+                    <Video size={18} className="text-[#4255ff] shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-sm text-[#15172B] truncate">{videoFile.name}</div>
+                      <div className="text-xs text-[#6A6F87]">{formatBytes(videoFile.size)}</div>
+                    </div>
+                    <button onClick={() => setVideoFile(null)} className="text-[#8D92A8] hover:text-[#D9534F]">
+                      <X size={15} />
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setVideoDragging(true); }}
+                    onDragLeave={() => setVideoDragging(false)}
+                    onDrop={handleVideoDrop}
+                    onClick={() => videoInputRef.current?.click()}
+                    className={cn("border-2 border-dashed rounded-xl p-7 text-center cursor-pointer transition-all", videoDragging ? "border-[#4255ff] bg-[#eef0ff]" : "border-[#c5c9e8] bg-gradient-to-b from-[#eef0ff] to-[#F9FAFE] hover:border-[#7080e8]")}
+                  >
+                    <div className="w-11 h-11 rounded-xl bg-white shadow-sm flex items-center justify-center mx-auto mb-3 text-[#4255ff]">
+                      <Upload size={20} />
+                    </div>
+                    <div className="text-sm font-semibold text-[#15172B]">
+                      Drop a video here or <span className="text-[#4255ff]">browse</span>
+                    </div>
+                    <div className="text-xs text-[#8D92A8] mt-1">MP4, MOV, MP3, WAV, M4A &nbsp;·&nbsp; Max 25 MB</div>
+                    <input
+                      ref={videoInputRef}
+                      type="file"
+                      accept=".mp4,.webm,.m4a,.wav,.mp3,.ogg,.mov"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f && isValidVideo(f)) { setVideoFile(f); setYoutubeUrl(""); }
+                        else if (f) toast.error("Please upload a video or audio file (MP4, MOV, MP3, etc.).");
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
-            {videoFile ? (
-              <div className="border border-[#c5c9e8] rounded-xl p-4 bg-[#eef0ff] flex items-center gap-3">
-                <Video size={18} className="text-[#4255ff] shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm text-[#15172B] truncate">{videoFile.name}</div>
-                  <div className="text-xs text-[#6A6F87]">{formatBytes(videoFile.size)}</div>
+            {/* Lock overlay for unauthenticated users */}
+            {!isSignedIn && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-[2px] rounded-2xl z-10 gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-[#eef0ff] flex items-center justify-center">
+                  <Lock size={22} className="text-[#4255ff]" />
                 </div>
-                <button onClick={() => setVideoFile(null)} className="text-[#8D92A8] hover:text-[#D9534F]">
-                  <X size={15} />
-                </button>
-              </div>
-            ) : (
-              <div
-                onDragOver={(e) => { e.preventDefault(); setVideoDragging(true); }}
-                onDragLeave={() => setVideoDragging(false)}
-                onDrop={handleVideoDrop}
-                onClick={() => videoInputRef.current?.click()}
-                className={cn("border-2 border-dashed rounded-xl p-7 text-center cursor-pointer transition-all", videoDragging ? "border-[#4255ff] bg-[#eef0ff]" : "border-[#c5c9e8] bg-gradient-to-b from-[#eef0ff] to-[#F9FAFE] hover:border-[#7080e8]")}
-              >
-                <div className="w-11 h-11 rounded-xl bg-white shadow-sm flex items-center justify-center mx-auto mb-3 text-[#4255ff]">
-                  <Upload size={20} />
+                <div className="text-center px-4">
+                  <p className="font-bold text-[#15172B] text-sm">Sign in to use this feature</p>
+                  <p className="text-xs text-[#6A6F87] mt-1">YouTube & video transcription requires a free account</p>
                 </div>
-                <div className="text-sm font-semibold text-[#15172B]">
-                  Drop a video here or <span className="text-[#4255ff]">browse</span>
-                </div>
-                <div className="text-xs text-[#8D92A8] mt-1">MP4, MOV, MP3, WAV, M4A &nbsp;·&nbsp; Max 25 MB</div>
-                <input
-                  ref={videoInputRef}
-                  type="file"
-                  accept=".mp4,.webm,.m4a,.wav,.mp3,.ogg,.mov"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f && isValidVideo(f)) setVideoFile(f);
-                    else if (f) toast.error("Please upload a video or audio file (MP4, MOV, MP3, etc.).");
-                  }}
-                />
+                <SignInButton mode="modal">
+                  <Button size="sm" className="bg-[#4255ff] hover:bg-[#3346ee] text-white gap-2">
+                    Sign in free <ArrowRight size={14} />
+                  </Button>
+                </SignInButton>
               </div>
             )}
-
           </div>
         </TabsContent>
       </Tabs>
@@ -876,10 +954,19 @@ function GeneratorForm({
 
       <Button
         onClick={handleGenerate}
-        disabled={(activeTab === "document" ? !docFile : !videoFile) || (!!siteKey && !turnstileToken)}
+        disabled={
+          (activeTab === "document" && !docFile) ||
+          (activeTab === "media" && !isSignedIn) ||
+          (activeTab === "media" && isSignedIn && !youtubeUrl.trim() && !videoFile) ||
+          (!!siteKey && !turnstileToken)
+        }
         className="w-full bg-[#4255ff] hover:bg-[#3346ee] text-white h-11 text-sm font-semibold rounded-xl gap-2 disabled:opacity-40"
       >
-        {activeTab === "document" ? <>Upload &amp; Generate</> : <>Upload &amp; Transcribe</>}
+        {activeTab === "document"
+          ? <>Upload &amp; Generate</>
+          : youtubeUrl.trim()
+            ? <>Fetch &amp; Generate</>
+            : <>Upload &amp; Transcribe</>}
         <ArrowRight size={16} />
       </Button>
     </div>
