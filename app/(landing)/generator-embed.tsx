@@ -21,6 +21,7 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Shuffle,
   RotateCcw,
   BookOpen,
@@ -521,6 +522,7 @@ function GeneratorForm({
   const [videoDragging, setVideoDragging] = useState(false);
   const [numFlashcards, setNumFlashcards] = useState(10);
   const [numQuiz, setNumQuiz] = useState(5);
+  const [customizeOpen, setCustomizeOpen] = useState(false);
   const [shakeFlashcards, setShakeFlashcards] = useState(false);
   const [shakeQuiz, setShakeQuiz] = useState(false);
 
@@ -781,14 +783,14 @@ function GeneratorForm({
                 </div>
 
                 {videoFile ? (
-                  <div className="border border-[#c5c9e8] rounded-xl p-4 bg-[#eef0ff] flex items-center gap-3">
-                    <Video size={18} className="text-[#4255ff] shrink-0" />
+                  <div className="border border-[#c5c9e8] rounded-xl p-3 bg-[#eef0ff] flex items-center gap-3">
+                    <Video size={16} className="text-[#4255ff] shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-sm text-[#15172B] truncate">{videoFile.name}</div>
                       <div className="text-xs text-[#6A6F87]">{formatBytes(videoFile.size)}</div>
                     </div>
                     <button onClick={() => setVideoFile(null)} className="text-[#8D92A8] hover:text-[#D9534F]">
-                      <X size={15} />
+                      <X size={14} />
                     </button>
                   </div>
                 ) : (
@@ -797,15 +799,16 @@ function GeneratorForm({
                     onDragLeave={() => setVideoDragging(false)}
                     onDrop={handleVideoDrop}
                     onClick={() => videoInputRef.current?.click()}
-                    className={cn("border-2 border-dashed rounded-xl p-7 text-center cursor-pointer transition-all", videoDragging ? "border-[#4255ff] bg-[#eef0ff]" : "border-[#c5c9e8] bg-gradient-to-b from-[#eef0ff] to-[#F9FAFE] hover:border-[#7080e8]")}
+                    className={cn("flex items-center gap-3 p-3 rounded-xl border border-dashed cursor-pointer transition-all", videoDragging ? "border-[#4255ff] bg-[#eef0ff]" : "border-[#c5c9e8] bg-[#f9faff] hover:border-[#7080e8]")}
                   >
-                    <div className="w-11 h-11 rounded-xl bg-white shadow-sm flex items-center justify-center mx-auto mb-3 text-[#4255ff]">
-                      <Upload size={20} />
+                    <div className="w-8 h-8 rounded-lg bg-[#eef0ff] flex items-center justify-center shrink-0 text-[#4255ff]">
+                      <Upload size={14} />
                     </div>
-                    <div className="text-sm font-semibold text-[#15172B]">
-                      Drop a video here or <span className="text-[#4255ff]">browse</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold text-[#15172B]">Upload a video file</div>
+                      <div className="text-xs text-[#8D92A8]">MP4, MOV, MP3, WAV, M4A · Max 25 MB</div>
                     </div>
-                    <div className="text-xs text-[#8D92A8] mt-1">MP4, MOV, MP3, WAV, M4A &nbsp;·&nbsp; Max 25 MB</div>
+                    <span className="text-xs font-semibold text-[#4255ff] shrink-0">Browse</span>
                     <input
                       ref={videoInputRef}
                       type="file"
@@ -843,100 +846,113 @@ function GeneratorForm({
         </TabsContent>
       </Tabs>
 
-      {/* Count customization */}
-      <div className="rounded-xl border border-[#e0e3f5] bg-[#f7f8ff] p-4 space-y-5">
-        <p className="text-xs font-bold text-[#1a1d3b] uppercase tracking-widest flex items-center gap-1.5">
-          <Sliders size={12} className="text-[#4255ff]" />
-          Customize
-        </p>
+      {/* Count customization — collapsible */}
+      <div className="rounded-xl border border-[#e0e3f5] bg-[#f7f8ff] overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setCustomizeOpen((v) => !v)}
+          className="flex items-center justify-between w-full px-4 py-3 text-left"
+        >
+          <span className="text-xs font-bold text-[#1a1d3b] uppercase tracking-widest flex items-center gap-1.5">
+            <Sliders size={12} className="text-[#4255ff]" />
+            Customize
+            {!customizeOpen && (
+              <span className="normal-case font-normal text-[#6A6F87] ml-1">
+                · {numFlashcards} cards, {numQuiz} quiz
+              </span>
+            )}
+          </span>
+          <ChevronDown
+            size={15}
+            className={cn("text-[#4255ff] transition-transform duration-200 shrink-0", customizeOpen && "rotate-180")}
+          />
+        </button>
 
-        {/* Flashcard count slider */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-[#34384f] flex items-center gap-1.5">
-              <BookOpen size={12} className="text-[#4255ff]" /> Flashcards
-            </span>
-            <span className="text-lg font-extrabold text-[#4255ff] tabular-nums w-8 text-right">{numFlashcards}</span>
-          </div>
-          <div className="relative">
-            <input
-              type="range"
-              min={5}
-              max={20}
-              value={numFlashcards}
-              onChange={isSignedIn ? (e) => setNumFlashcards(Number(e.target.value)) : () => {}}
-              className="w-full cursor-pointer"
-              style={{ accentColor: "#4255ff", pointerEvents: isSignedIn ? "auto" : "none" }}
-            />
-            {!isSignedIn && (
-              <div
-                className="absolute inset-0 cursor-pointer"
-                onMouseDown={() => triggerShake(setShakeFlashcards)}
-                onTouchStart={() => triggerShake(setShakeFlashcards)}
-              />
-            )}
-          </div>
-          <div className="flex justify-between text-xs mt-1">
-            <span className="text-[#9499c0]">5</span>
-            {isSignedIn ? (
-              <span className="text-[#d97706] font-semibold">🔒 Up to 50 with Premium</span>
-            ) : (
-              <SignUpButton mode="modal">
-                <button className="flex items-center gap-1 text-[#4255ff] font-semibold hover:underline">
-                  <Lock
-                    size={11}
-                    className={shakeFlashcards ? "animate-lock-shake" : ""}
+        <div className={cn("overflow-hidden transition-all duration-200 ease-in-out", customizeOpen ? "max-h-96" : "max-h-0")}>
+          <div className="px-4 pb-4 space-y-5">
+            {/* Flashcard count slider */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-[#34384f] flex items-center gap-1.5">
+                  <BookOpen size={12} className="text-[#4255ff]" /> Flashcards
+                </span>
+                <span className="text-lg font-extrabold text-[#4255ff] tabular-nums w-8 text-right">{numFlashcards}</span>
+              </div>
+              <div className="relative">
+                <input
+                  type="range"
+                  min={5}
+                  max={20}
+                  value={numFlashcards}
+                  onChange={isSignedIn ? (e) => setNumFlashcards(Number(e.target.value)) : () => {}}
+                  className="w-full cursor-pointer"
+                  style={{ accentColor: "#4255ff", pointerEvents: isSignedIn ? "auto" : "none" }}
+                />
+                {!isSignedIn && (
+                  <div
+                    className="absolute inset-0 cursor-pointer"
+                    onMouseDown={() => triggerShake(setShakeFlashcards)}
+                    onTouchStart={() => triggerShake(setShakeFlashcards)}
                   />
-                  Sign in to customize
-                </button>
-              </SignUpButton>
-            )}
-            <span className="text-[#9499c0]">20</span>
-          </div>
-        </div>
+                )}
+              </div>
+              <div className="flex justify-between text-xs mt-1">
+                <span className="text-[#9499c0]">5</span>
+                {isSignedIn ? (
+                  <span className="text-[#d97706] font-semibold">🔒 Up to 50 with Premium</span>
+                ) : (
+                  <SignUpButton mode="modal">
+                    <button className="flex items-center gap-1 text-[#4255ff] font-semibold hover:underline">
+                      <Lock size={11} className={shakeFlashcards ? "animate-lock-shake" : ""} />
+                      Sign in to customize
+                    </button>
+                  </SignUpButton>
+                )}
+                <span className="text-[#9499c0]">20</span>
+              </div>
+            </div>
 
-        {/* Quiz count slider */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-[#34384f] flex items-center gap-1.5">
-              <Brain size={12} className="text-[#d97706]" /> Quiz questions
-            </span>
-            <span className="text-lg font-extrabold text-[#d97706] tabular-nums w-8 text-right">{numQuiz}</span>
-          </div>
-          <div className="relative">
-            <input
-              type="range"
-              min={3}
-              max={20}
-              value={numQuiz}
-              onChange={isSignedIn ? (e) => setNumQuiz(Number(e.target.value)) : () => {}}
-              className="w-full cursor-pointer"
-              style={{ accentColor: "#d97706", pointerEvents: isSignedIn ? "auto" : "none" }}
-            />
-            {!isSignedIn && (
-              <div
-                className="absolute inset-0 cursor-pointer"
-                onMouseDown={() => triggerShake(setShakeQuiz)}
-                onTouchStart={() => triggerShake(setShakeQuiz)}
-              />
-            )}
-          </div>
-          <div className="flex justify-between text-xs mt-1">
-            <span className="text-[#9499c0]">3</span>
-            {isSignedIn ? (
-              <span className="text-[#d97706] font-semibold">🔒 Up to 50 with Premium</span>
-            ) : (
-              <SignUpButton mode="modal">
-                <button className="flex items-center gap-1 text-[#4255ff] font-semibold hover:underline">
-                  <Lock
-                    size={11}
-                    className={shakeQuiz ? "animate-lock-shake" : ""}
+            {/* Quiz count slider */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-[#34384f] flex items-center gap-1.5">
+                  <Brain size={12} className="text-[#d97706]" /> Quiz questions
+                </span>
+                <span className="text-lg font-extrabold text-[#d97706] tabular-nums w-8 text-right">{numQuiz}</span>
+              </div>
+              <div className="relative">
+                <input
+                  type="range"
+                  min={3}
+                  max={20}
+                  value={numQuiz}
+                  onChange={isSignedIn ? (e) => setNumQuiz(Number(e.target.value)) : () => {}}
+                  className="w-full cursor-pointer"
+                  style={{ accentColor: "#d97706", pointerEvents: isSignedIn ? "auto" : "none" }}
+                />
+                {!isSignedIn && (
+                  <div
+                    className="absolute inset-0 cursor-pointer"
+                    onMouseDown={() => triggerShake(setShakeQuiz)}
+                    onTouchStart={() => triggerShake(setShakeQuiz)}
                   />
-                  Sign in to customize
-                </button>
-              </SignUpButton>
-            )}
-            <span className="text-[#9499c0]">20</span>
+                )}
+              </div>
+              <div className="flex justify-between text-xs mt-1">
+                <span className="text-[#9499c0]">3</span>
+                {isSignedIn ? (
+                  <span className="text-[#d97706] font-semibold">🔒 Up to 50 with Premium</span>
+                ) : (
+                  <SignUpButton mode="modal">
+                    <button className="flex items-center gap-1 text-[#4255ff] font-semibold hover:underline">
+                      <Lock size={11} className={shakeQuiz ? "animate-lock-shake" : ""} />
+                      Sign in to customize
+                    </button>
+                  </SignUpButton>
+                )}
+                <span className="text-[#9499c0]">20</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

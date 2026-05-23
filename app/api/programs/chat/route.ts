@@ -128,7 +128,7 @@ ${ragContext}`;
     reply = text;
     captureAiGeneration({
       distinctId: userId,
-      model: "google/gemini-2.5-flash",
+      model: "google/gemini-2.5-flash-lite",
       inputTokens,
       outputTokens,
       latencyMs: Date.now() - chatStart,

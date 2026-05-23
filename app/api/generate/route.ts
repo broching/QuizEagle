@@ -90,7 +90,7 @@ function ensureDOMPolyfills() {
 }
 
 const GEMINI_ENDPOINT =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent";
 
 const RESPONSE_SCHEMA = {
   type: "object",
@@ -468,7 +468,7 @@ export async function POST(req: NextRequest) {
 
   captureAiGeneration({
     distinctId: userId ?? `anon:${ip}`,
-    model: "google/gemini-2.5-flash",
+    model: "google/gemini-2.5-flash-lite",
     inputTokens: totalInputTokens,
     outputTokens: totalOutputTokens,
     latencyMs: Date.now() - geminiStart,

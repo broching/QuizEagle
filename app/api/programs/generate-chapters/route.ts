@@ -176,7 +176,7 @@ ${program.documentText}`,
     );
     captureAiGeneration({
       distinctId,
-      model: "google/gemini-2.5-flash",
+      model: "google/gemini-2.5-flash-lite",
       inputTokens: oIn,
       outputTokens: oOut,
       latencyMs: Date.now() - outlineStart,
@@ -239,7 +239,7 @@ ${chapterText}`,
       );
       captureAiGeneration({
         distinctId,
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-flash-lite",
         inputTokens: cIn,
         outputTokens: cOut,
         latencyMs: Date.now() - chapterStart,

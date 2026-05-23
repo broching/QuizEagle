@@ -38,7 +38,7 @@ export function captureAiGeneration(params: {
     distinctId: params.distinctId,
     event: "$ai_generation",
     properties: {
-      // Model identity — PostHog uses "google/gemini-2.5-flash" to match OpenRouter pricing
+      // Model identity — PostHog uses "google/gemini-2.5-flash-lite" to match OpenRouter pricing
       $ai_model: params.model,
       $ai_provider: "google",
       $ai_base_url: GEMINI_BASE_URL,
