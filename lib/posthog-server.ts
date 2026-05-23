@@ -1,5 +1,7 @@
 import { PostHog } from "posthog-node";
 
+const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
+
 let _client: PostHog | null = null;
 
 function getClient(): PostHog | null {
@@ -21,9 +23,14 @@ export function captureAiGeneration(params: {
   inputTokens: number;
   outputTokens: number;
   latencyMs: number;
-  generationType: "flashcard_deck" | "study_outline" | "study_chapter" | "study_chat";
+  generationType: string;
   traceId?: string;
   programId?: string;
+  httpStatus?: number;
+  isError?: boolean;
+  error?: string;
+  temperature?: number;
+  maxOutputTokens?: number;
 }) {
   const ph = getClient();
   if (!ph) return;
@@ -31,11 +38,25 @@ export function captureAiGeneration(params: {
     distinctId: params.distinctId,
     event: "$ai_generation",
     properties: {
+      // Model identity — PostHog uses "google/gemini-2.5-flash" to match OpenRouter pricing
       $ai_model: params.model,
       $ai_provider: "google",
+      $ai_base_url: GEMINI_BASE_URL,
+      // Token counts — PostHog auto-calculates cost from these + model
       $ai_input_tokens: params.inputTokens,
       $ai_output_tokens: params.outputTokens,
-      $ai_latency: params.latencyMs,
+      // Latency in seconds (PostHog standard)
+      $ai_latency: params.latencyMs / 1000,
+      // HTTP / error state
+      $ai_http_status: params.httpStatus ?? 200,
+      $ai_is_error: params.isError ?? false,
+      ...(params.isError && params.error ? { $ai_error: params.error } : {}),
+      // Model parameters
+      $ai_model_parameters: {
+        temperature: params.temperature ?? 0.3,
+        maxOutputTokens: params.maxOutputTokens ?? 8192,
+      },
+      // Custom properties
       ...(params.traceId ? { $ai_trace_id: params.traceId } : {}),
       generation_type: params.generationType,
       ...(params.programId ? { program_id: params.programId } : {}),

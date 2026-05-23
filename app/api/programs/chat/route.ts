@@ -128,12 +128,15 @@ ${ragContext}`;
     reply = text;
     captureAiGeneration({
       distinctId: userId,
-      model: "gemini-2.5-flash",
+      model: "google/gemini-2.5-flash",
       inputTokens,
       outputTokens,
       latencyMs: Date.now() - chatStart,
       generationType: "study_chat",
       programId,
+      httpStatus: 200,
+      temperature: 0.5,
+      maxOutputTokens: 2048,
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Chat request failed";

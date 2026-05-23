@@ -176,13 +176,16 @@ ${program.documentText}`,
     );
     captureAiGeneration({
       distinctId,
-      model: "gemini-2.5-flash",
+      model: "google/gemini-2.5-flash",
       inputTokens: oIn,
       outputTokens: oOut,
       latencyMs: Date.now() - outlineStart,
       generationType: "study_outline",
       traceId,
       programId,
+      httpStatus: 200,
+      temperature: 0.3,
+      maxOutputTokens: 4096,
     });
 
     // Save outline, get chapter Convex IDs
@@ -236,13 +239,16 @@ ${chapterText}`,
       );
       captureAiGeneration({
         distinctId,
-        model: "gemini-2.5-flash",
+        model: "google/gemini-2.5-flash",
         inputTokens: cIn,
         outputTokens: cOut,
         latencyMs: Date.now() - chapterStart,
         generationType: "study_chapter",
         traceId,
         programId,
+        httpStatus: 200,
+        temperature: 0.3,
+        maxOutputTokens: 16384,
       });
 
       await authedConvex.mutation(api.mutations.studyPrograms.saveChapterContent, {

@@ -468,11 +468,14 @@ export async function POST(req: NextRequest) {
 
   captureAiGeneration({
     distinctId: userId ?? `anon:${ip}`,
-    model: "gemini-2.5-flash",
+    model: "google/gemini-2.5-flash",
     inputTokens: totalInputTokens,
     outputTokens: totalOutputTokens,
     latencyMs: Date.now() - geminiStart,
-    generationType: "flashcard_deck",
+    generationType: sourceType === "youtube" ? "flashcard_deck_youtube" : "flashcard_deck",
+    httpStatus: 200,
+    temperature: 0.3,
+    maxOutputTokens: 8192,
   });
 
   // Best-effort cleanup of temp file from Convex storage (skip for YouTube — no file stored)
