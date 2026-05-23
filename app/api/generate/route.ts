@@ -466,7 +466,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  captureAiGeneration({
+  await captureAiGeneration({
     distinctId: userId ?? `anon:${ip}`,
     model: "google/gemini-2.5-flash-lite",
     inputTokens: totalInputTokens,
