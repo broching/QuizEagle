@@ -31,7 +31,12 @@ const orgSchema = {
   "@type": "Organization",
   name: "Quiz Eagle",
   url: "https://quizeagle.com",
-  logo: "https://quizeagle.com/download.svg",
+  logo: {
+    "@type": "ImageObject",
+    url: "https://quizeagle.com/favicon.ico",
+    width: 32,
+    height: 32,
+  },
 };
 
 const faqSchema = {
@@ -76,6 +81,22 @@ const faqSchema = {
       acceptedAnswer: {
         "@type": "Answer",
         text: "Most decks are ready in under 30 seconds. Longer documents or videos may take up to a minute. Quiz Eagle uses Gemini 2.5 Flash, one of the fastest AI models available.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Is Quiz Eagle a good Quizlet alternative?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes — Quiz Eagle is a popular free Quizlet alternative for students who want AI-generated flashcards. Unlike Quizlet, Quiz Eagle automatically creates flashcards and quizzes from any PDF, PowerPoint, Word document, or video. No manual typing required, and it's completely free.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Can I generate flashcards from a video lecture?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. Quiz Eagle accepts video and audio files — MP4, MOV, MP3, WAV, and M4A — up to 25 MB. Upload the file and Quiz Eagle will transcribe the audio and generate a complete flashcard deck and quiz automatically.",
       },
     },
   ],

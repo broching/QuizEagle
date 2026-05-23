@@ -32,12 +32,21 @@ export const metadata: Metadata = {
     "AI study tool",
     "flashcard maker",
     "free flashcards",
+    "quizlet alternative",
+    "anki alternative",
+    "make flashcards from PDF",
+    "powerpoint to flashcards",
+    "youtube to flashcards",
+    "study guide generator",
+    "quiz maker AI",
+    "AI exam preparation tool",
+    "convert PDF to quiz",
+    "student study tools 2025",
   ],
   authors: [{ name: "Quiz Eagle" }],
   metadataBase: new URL("https://quizeagle.com"),
   icons: {
-    icon: "/download.svg",
-    shortcut: "/download.svg",
+    icon: "/favicon.ico",
   },
   openGraph: {
     type: "website",
@@ -46,12 +55,15 @@ export const metadata: Metadata = {
     description:
       "Turn any PDF, PowerPoint, Word doc, or video into flashcards and a quiz in seconds. 100% free, no sign-up needed.",
     url: "https://quizeagle.com",
+    locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
     title: "Quiz Eagle — Free AI Flashcard & Quiz Generator",
     description:
       "Turn any document or video into flashcards & a quiz in seconds. Free, no sign-up needed.",
+    site: "@QuizEagle",
+    creator: "@QuizEagle",
   },
 };
 
