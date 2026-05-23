@@ -258,6 +258,25 @@ async function extractDocxText(buffer: Buffer): Promise<string> {
   return result.value;
 }
 
+const YOUTUBE_MAX_WORDS = 12_000;
+
+async function fetchYoutubeTranscript(videoUrl: string): Promise<string> {
+  const apiKey = process.env.FETCHTRANSCRIPT_API_KEY;
+  if (!apiKey) throw new Error("FETCHTRANSCRIPT_API_KEY is not configured on the server.");
+
+  const match = videoUrl.match(
+    /(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+  );
+  if (!match) throw new Error("Invalid YouTube URL. Please paste a valid youtube.com or youtu.be link.");
+  const videoId = match[1];
+
+  const { FetchTranscriptClient } = await import("fetchtranscript");
+  const client = new FetchTranscriptClient({ apiKey });
+  const text = await client.transcripts.getText(videoId);
+  if (!text?.trim()) throw new Error("No transcript found for this video. The video may have captions disabled.");
+  return text;
+}
+
 async function transcribeWithGroq(buffer: Buffer, fileName: string, mimeType: string): Promise<string> {
   const groqKey = process.env.GROQ_API_KEY;
   if (!groqKey) throw new Error("GROQ_API_KEY is not configured on the server.");
@@ -317,10 +336,11 @@ export async function POST(req: NextRequest) {
   }
 
   let body: {
-    sourceType: "document" | "video";
+    sourceType: "document" | "video" | "youtube";
     storageId?: string;
     fileName?: string;
     mimeType?: string;
+    youtubeUrl?: string;
     numFlashcards?: number;
     numQuiz?: number;
     turnstileToken?: string;
@@ -342,55 +362,68 @@ export async function POST(req: NextRequest) {
   const numFlashcards = Math.min(Math.max(Number(body.numFlashcards ?? 10), 3), 50);
   const numQuiz = Math.min(Math.max(Number(body.numQuiz ?? 5), 3), 50);
 
-  if (!storageId) return NextResponse.json({ error: "Missing storageId" }, { status: 400 });
+  // YouTube requires authentication
+  if (sourceType === "youtube" && !userId) {
+    return NextResponse.json({ error: "Sign in required to use YouTube transcription." }, { status: 401 });
+  }
 
-  // ── Step 1: fetch file from Convex storage and extract text ──────────────────
+  if (sourceType !== "youtube" && !storageId) {
+    return NextResponse.json({ error: "Missing storageId" }, { status: 400 });
+  }
+
+  // ── Step 1: extract text from source ─────────────────────────────────────────
   let text: string;
 
   try {
-    const fileUrl = await convex.query(api.files.getFileUrl, {
-      storageId: storageId as Id<"_storage">,
-    });
-    if (!fileUrl) {
-      return NextResponse.json({ error: "File not found in storage" }, { status: 404 });
-    }
-
-    const fileRes = await fetch(fileUrl);
-    if (!fileRes.ok) {
-      return NextResponse.json({ error: "Failed to fetch file from storage" }, { status: 502 });
-    }
-    const buffer = Buffer.from(await fileRes.arrayBuffer());
-
-    if (sourceType === "video") {
-      text = await transcribeWithGroq(buffer, fileName ?? "audio.mp4", mimeType ?? "video/mp4");
+    if (sourceType === "youtube") {
+      const { youtubeUrl } = body;
+      if (!youtubeUrl) return NextResponse.json({ error: "Missing YouTube URL" }, { status: 400 });
+      text = await fetchYoutubeTranscript(youtubeUrl);
     } else {
-      const docType = getDocumentType(fileName ?? "");
-      if (!docType) {
-        return NextResponse.json(
-          { error: "Unsupported file type. Please upload a PDF, PPTX, or DOCX." },
-          { status: 400 }
-        );
+      const fileUrl = await convex.query(api.files.getFileUrl, {
+        storageId: storageId as Id<"_storage">,
+      });
+      if (!fileUrl) {
+        return NextResponse.json({ error: "File not found in storage" }, { status: 404 });
       }
-      if (docType === "pdf") {
-        ensureDOMPolyfills();
-        const pdfParse = (await import("pdf-parse")).default;
-        const result = await pdfParse(buffer);
-        if (!result.text?.trim()) {
+
+      const fileRes = await fetch(fileUrl);
+      if (!fileRes.ok) {
+        return NextResponse.json({ error: "Failed to fetch file from storage" }, { status: 502 });
+      }
+      const buffer = Buffer.from(await fileRes.arrayBuffer());
+
+      if (sourceType === "video") {
+        text = await transcribeWithGroq(buffer, fileName ?? "audio.mp4", mimeType ?? "video/mp4");
+      } else {
+        const docType = getDocumentType(fileName ?? "");
+        if (!docType) {
           return NextResponse.json(
-            { error: "Could not extract text from this PDF. Make sure it is not a scanned image." },
-            { status: 422 }
+            { error: "Unsupported file type. Please upload a PDF, PPTX, or DOCX." },
+            { status: 400 }
           );
         }
-        text = result.text;
-      } else if (docType === "pptx") {
-        text = await extractPptxText(buffer);
-      } else {
-        text = await extractDocxText(buffer);
+        if (docType === "pdf") {
+          ensureDOMPolyfills();
+          const pdfParse = (await import("pdf-parse")).default;
+          const result = await pdfParse(buffer);
+          if (!result.text?.trim()) {
+            return NextResponse.json(
+              { error: "Could not extract text from this PDF. Make sure it is not a scanned image." },
+              { status: 422 }
+            );
+          }
+          text = result.text;
+        } else if (docType === "pptx") {
+          text = await extractPptxText(buffer);
+        } else {
+          text = await extractDocxText(buffer);
+        }
       }
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : "File processing failed";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: msg }, { status: 422 });
   }
 
   // ── Step 2: call Gemini with 3-key rotation ───────────────────────────────
@@ -404,7 +437,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No Gemini API keys configured" }, { status: 500 });
   }
 
-  const truncated = truncateToWords(text, 15000);
+  const maxWords = sourceType === "youtube" ? YOUTUBE_MAX_WORDS : 15_000;
+  const truncated = truncateToWords(text, maxWords);
   let parsed: GeminiResult | null = null;
   let totalInputTokens = 0;
   let totalOutputTokens = 0;
@@ -441,15 +475,18 @@ export async function POST(req: NextRequest) {
     generationType: "flashcard_deck",
   });
 
-  // Best-effort cleanup of temp file from Convex storage
-  convex.mutation(api.files.deleteFile, { storageId: storageId as Id<"_storage"> }).catch((err) => {
-    console.warn("Failed to delete temp file from Convex storage:", err);
-  });
+  // Best-effort cleanup of temp file from Convex storage (skip for YouTube — no file stored)
+  if (sourceType !== "youtube" && storageId) {
+    convex.mutation(api.files.deleteFile, { storageId: storageId as Id<"_storage"> }).catch((err) => {
+      console.warn("Failed to delete temp file from Convex storage:", err);
+    });
+  }
 
   return NextResponse.json({
     title: parsed.title,
     summary: parsed.summary,
     sourceType,
+    sourceUrl: sourceType === "youtube" ? body.youtubeUrl : undefined,
     sourceFileName: fileName,
     flashcards: parsed.flashcards.map((fc, i) => ({
       front: fc.front,
