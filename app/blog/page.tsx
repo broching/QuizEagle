@@ -8,6 +8,14 @@ export const metadata: Metadata = {
   description:
     "Guides on how to study effectively with flashcards, convert PDFs and videos to study decks, and get the most out of AI study tools.",
   alternates: { canonical: "https://quizeagle.com/blog" },
+  keywords: [
+    "study tips",
+    "flashcard guides",
+    "how to study with AI",
+    "PDF to flashcards guide",
+    "AI study tools",
+    "study smarter",
+  ],
 };
 
 function formatDate(dateStr: string) {
@@ -18,10 +26,28 @@ function formatDate(dateStr: string) {
   });
 }
 
+const blogListSchema = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name: "Quiz Eagle Blog — Study Tips & Flashcard Guides",
+  description:
+    "Guides on how to study effectively with flashcards, convert PDFs and videos to study decks, and get the most out of AI study tools.",
+  url: "https://quizeagle.com/blog",
+  numberOfItems: posts.length,
+  itemListElement: posts.map((post, i) => ({
+    "@type": "ListItem",
+    position: i + 1,
+    name: post.title,
+    url: `https://quizeagle.com/blog/${post.slug}`,
+  })),
+};
+
 export default function BlogIndex() {
   const [featured, ...rest] = posts;
 
   return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(blogListSchema) }} />
     <div>
       {/* Header */}
       <div className="mb-10">
@@ -123,5 +149,6 @@ export default function BlogIndex() {
         </Link>
       </div>
     </div>
+    </>
   );
 }
