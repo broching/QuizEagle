@@ -174,7 +174,7 @@ ${program.documentText}`,
         4096
       )
     );
-    captureAiGeneration({
+    await captureAiGeneration({
       distinctId,
       model: "google/gemini-2.5-flash-lite",
       inputTokens: oIn,
@@ -237,7 +237,7 @@ ${chapterText}`,
           16384
         )
       );
-      captureAiGeneration({
+      await captureAiGeneration({
         distinctId,
         model: "google/gemini-2.5-flash-lite",
         inputTokens: cIn,

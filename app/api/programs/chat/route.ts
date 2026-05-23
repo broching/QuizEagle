@@ -126,7 +126,7 @@ ${ragContext}`;
       callGeminiChat(key, systemPrompt, history, message)
     );
     reply = text;
-    captureAiGeneration({
+    await captureAiGeneration({
       distinctId: userId,
       model: "google/gemini-2.5-flash-lite",
       inputTokens,
