@@ -1,11 +1,17 @@
 import Link from "next/link"
 import Image from "next/image"
 
-const links = [
+const navLinks = [
     { title: "Features", href: "#" },
     { title: "Pricing", href: "#pricing" },
     { title: "Blog", href: "/blog" },
+    { title: "About", href: "/about" },
     { title: "Dashboard", href: "/dashboard" },
+]
+
+const legalLinks = [
+    { title: "Privacy Policy", href: "/privacy" },
+    { title: "Terms of Service", href: "/terms" },
 ]
 
 export default function FooterSection() {
@@ -30,13 +36,27 @@ export default function FooterSection() {
                 </div>
 
                 {/* Nav links */}
-                <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm mb-8">
-                    {links.map((link, i) => (
+                <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm mb-4">
+                    {navLinks.map((link, i) => (
                         <Link
                             key={i}
                             href={link.href}
                             className="font-medium transition-colors duration-150 hover:opacity-100"
                             style={{ color: "#6b6f9a" }}
+                        >
+                            {link.title}
+                        </Link>
+                    ))}
+                </div>
+
+                {/* Legal links */}
+                <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs mb-8">
+                    {legalLinks.map((link, i) => (
+                        <Link
+                            key={i}
+                            href={link.href}
+                            className="transition-colors duration-150 hover:opacity-100"
+                            style={{ color: "#9499c0" }}
                         >
                             {link.title}
                         </Link>

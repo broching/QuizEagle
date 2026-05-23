@@ -6,6 +6,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: "https://quizeagle.com", lastModified: new Date(), changeFrequency: "weekly", priority: 1 },
     { url: "https://quizeagle.com/generate", lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
     { url: "https://quizeagle.com/blog", lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },
+    { url: "https://quizeagle.com/about", lastModified: new Date("2025-05-28"), changeFrequency: "monthly", priority: 0.6 },
+    { url: "https://quizeagle.com/privacy", lastModified: new Date("2025-05-28"), changeFrequency: "yearly", priority: 0.3 },
+    { url: "https://quizeagle.com/terms", lastModified: new Date("2025-05-28"), changeFrequency: "yearly", priority: 0.3 },
     ...posts.map((post) => ({
       url: `https://quizeagle.com/blog/${post.slug}`,
       lastModified: new Date(post.date),
