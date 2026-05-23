@@ -17,7 +17,9 @@ export async function captureAiGeneration(params: {
 }): Promise<void> {
   const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
   if (!key) return;
-  const host = (process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com").replace(/\/$/, "");
+  const configuredHost = process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com";
+  // Client-side proxy configs use a relative path (e.g. "/ingest") — invalid for server-side fetch
+  const host = configuredHost.startsWith("/") ? "https://us.i.posthog.com" : configuredHost.replace(/\/$/, "");
 
   await fetch(`${host}/capture/`, {
     method: "POST",
