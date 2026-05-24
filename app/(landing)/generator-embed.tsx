@@ -30,8 +30,8 @@ import {
   Lock,
   Link,
 } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { LogoIcon } from "@/components/logo";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -104,14 +104,13 @@ function LoadingState({ currentStep }: { currentStep: "extracting" | "generating
         <div className="absolute w-24 h-24 rounded-full animate-ping opacity-20" style={{ background: "radial-gradient(circle, #9B99FE, #2BC8B7)" }} />
         <div className="absolute w-20 h-20 rounded-full opacity-30 animate-pulse" style={{ background: "radial-gradient(circle, #9B99FE 0%, transparent 70%)" }} />
         <div
-          className="relative w-16 h-16 rounded-2xl flex items-center justify-center"
+          className="relative w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden bg-white"
           style={{
-            background: "linear-gradient(135deg, #4255ff 0%, #3bc8b7 100%)",
             boxShadow: "0 0 32px rgba(155,153,254,0.5), 0 8px 24px rgba(66,85,255,0.3)",
             animation: "logoPulse 2s ease-in-out infinite",
           }}
         >
-          <LogoIcon className="size-8 text-white" uniColor />
+          <Image src="/download.svg" alt="QuizEagle" width={80} height={80} className="object-contain" />
         </div>
       </div>
 
