@@ -31,6 +31,7 @@ import {
   Link,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LogoIcon } from "@/components/logo";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -63,43 +64,99 @@ type Step = "idle" | "extracting" | "generating" | "done" | "error" | "rate-limi
 type RateLimitData = { isAuthenticated: boolean; resetAt: number };
 
 const LOADING_STEPS: { key: "extracting" | "generating"; label: string }[] = [
-  { key: "extracting", label: "Extracting content..." },
-  { key: "generating", label: "Generating flashcards with AI..." },
+  { key: "extracting", label: "Reading your content" },
+  { key: "generating", label: "Building flashcards & quiz" },
+];
+
+const LOADING_PHRASES = [
+  "Hold on tight...",
+  "Flipping through your notes...",
+  "Crafting the perfect questions...",
+  "Your brain will thank you later...",
+  "Turning pages into flashcards...",
+  "Making you smarter, one card at a time...",
+  "Almost ready to quiz you...",
+  "Distilling the key ideas...",
 ];
 
 // ─── Loading state ────────────────────────────────────────────────────────────
 
 function LoadingState({ currentStep }: { currentStep: "extracting" | "generating" }) {
   const stepIndex = LOADING_STEPS.findIndex((s) => s.key === currentStep);
+  const [phraseIndex, setPhraseIndex] = useState(0);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const cycle = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setPhraseIndex((i) => (i + 1) % LOADING_PHRASES.length);
+        setVisible(true);
+      }, 400);
+    }, 3000);
+    return () => clearInterval(cycle);
+  }, []);
 
   return (
-    <div className="flex flex-col gap-6 py-8 max-w-md mx-auto">
-      <div className="flex flex-col items-center gap-4">
+    <div className="flex flex-col items-center gap-8 py-10 max-w-sm mx-auto">
+      {/* Logo with animated glow ring */}
+      <div className="relative flex items-center justify-center">
+        <div className="absolute w-24 h-24 rounded-full animate-ping opacity-20" style={{ background: "radial-gradient(circle, #9B99FE, #2BC8B7)" }} />
+        <div className="absolute w-20 h-20 rounded-full opacity-30 animate-pulse" style={{ background: "radial-gradient(circle, #9B99FE 0%, transparent 70%)" }} />
         <div
-          className="w-14 h-14 rounded-2xl flex items-center justify-center"
-          style={{ background: "linear-gradient(135deg, #4255ff, #3346ee)", boxShadow: "0 8px 24px rgba(92,107,192,.35)" }}
+          className="relative w-16 h-16 rounded-2xl flex items-center justify-center"
+          style={{
+            background: "linear-gradient(135deg, #4255ff 0%, #3bc8b7 100%)",
+            boxShadow: "0 0 32px rgba(155,153,254,0.5), 0 8px 24px rgba(66,85,255,0.3)",
+            animation: "logoPulse 2s ease-in-out infinite",
+          }}
         >
-          <Loader2 size={24} className="text-white animate-spin" />
+          <LogoIcon className="size-8 text-white" uniColor />
         </div>
-        <p className="text-sm font-bold text-[#4255ff] uppercase tracking-widest">Working on it</p>
-        <h3 className="text-xl font-extrabold text-[#15172B] text-center">Generating your study session…</h3>
       </div>
 
-      <div className="flex flex-col gap-3">
+      {/* Alternating phrase */}
+      <div className="text-center min-h-[2rem] flex items-center justify-center px-4">
+        <p
+          className="text-lg font-bold text-[#15172B] transition-opacity duration-400"
+          style={{ opacity: visible ? 1 : 0 }}
+        >
+          {LOADING_PHRASES[phraseIndex]}
+        </p>
+      </div>
+
+      {/* Steps */}
+      <div className="w-full flex flex-col gap-2.5">
         {LOADING_STEPS.map((s, i) => {
           const isDone = i < stepIndex;
           const isActive = i === stepIndex;
           return (
-            <div key={s.key} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-[#e0e3f5]">
-              <div className={cn("w-7 h-7 rounded-full flex items-center justify-center shrink-0 font-bold text-xs transition-all",
-                isDone ? "bg-[#2BAA66] text-white" : isActive ? "bg-[#eef0ff] border-2 border-[#4255ff] text-[#4255ff]" : "bg-[#eef0ff] text-[#B6BAC9]")}>
-                {isDone ? <CheckCircle size={14} /> : isActive ? <div className="w-2 h-2 rounded-full bg-[#4255ff] animate-pulse" /> : i + 1}
+            <div
+              key={s.key}
+              className={cn(
+                "flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-500",
+                isDone ? "bg-[#f0fdf6] border-[#bbf7d0]" : isActive ? "bg-[#eef0ff] border-[#c7cbff]" : "bg-white border-[#e0e3f5]"
+              )}
+            >
+              <div className={cn(
+                "w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold transition-all duration-500",
+                isDone ? "bg-[#22c55e] text-white" : isActive ? "bg-[#4255ff] text-white" : "bg-[#e0e3f5] text-[#B6BAC9]"
+              )}>
+                {isDone ? <CheckCircle size={13} /> : isActive
+                  ? <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                  : <span>{i + 1}</span>
+                }
               </div>
-              <span className={cn("text-sm font-semibold flex-1", isDone ? "text-[#6A6F87] line-through" : isActive ? "text-[#15172B]" : "text-[#B6BAC9]")}>{s.label}</span>
+              <span className={cn(
+                "text-sm font-semibold flex-1",
+                isDone ? "text-[#16a34a]" : isActive ? "text-[#4255ff]" : "text-[#B6BAC9]"
+              )}>
+                {s.label}
+              </span>
               {isActive && (
                 <div className="flex gap-1">
                   {[0, 1, 2].map((d) => (
-                    <div key={d} className="w-1.5 h-1.5 rounded-full bg-[#4255ff]" style={{ animation: `bounce 1.2s ease-in-out infinite ${d * 0.15}s` }} />
+                    <div key={d} className="w-1.5 h-1.5 rounded-full bg-[#4255ff]" style={{ animation: `dotBounce 1.2s ease-in-out infinite ${d * 0.18}s` }} />
                   ))}
                 </div>
               )}
@@ -108,22 +165,26 @@ function LoadingState({ currentStep }: { currentStep: "extracting" | "generating
         })}
       </div>
 
-      <div className="w-full bg-[#eef0ff] rounded-full h-1.5 overflow-hidden">
-        <div className="h-full rounded-full transition-all duration-700" style={{ width: `${((stepIndex + 0.5) / LOADING_STEPS.length) * 100}%`, background: "linear-gradient(90deg, #7080e8, #4255ff)" }} />
-      </div>
-
-      <div className="w-full rounded-2xl p-4 flex gap-3 items-center" style={{ background: "linear-gradient(135deg, #FFF7E6, #FFEFC8)", border: "1px solid #F4DC9E" }}>
-        <div className="text-xl">💡</div>
-        <div>
-          <div className="text-xs font-bold text-[#9C6A0A] uppercase tracking-wider mb-0.5">Fun fact</div>
-          <div className="text-sm text-[#5C4310] font-medium leading-relaxed">
-            Students who test themselves remember <strong>50% more</strong> than those who only re-read notes.
-          </div>
-        </div>
+      {/* Progress bar */}
+      <div className="w-full bg-[#eef0ff] rounded-full h-1 overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-700"
+          style={{
+            width: `${((stepIndex + 0.6) / LOADING_STEPS.length) * 100}%`,
+            background: "linear-gradient(90deg, #9B99FE, #4255ff, #2BC8B7)",
+          }}
+        />
       </div>
 
       <style jsx>{`
-        @keyframes bounce { 0%, 80%, 100% { transform: scale(0.4); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+        @keyframes logoPulse {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 32px rgba(155,153,254,0.5), 0 8px 24px rgba(66,85,255,0.3); }
+          50% { transform: scale(1.06); box-shadow: 0 0 48px rgba(155,153,254,0.7), 0 12px 32px rgba(66,85,255,0.4); }
+        }
+        @keyframes dotBounce {
+          0%, 80%, 100% { transform: scale(0.4); opacity: 0.4; }
+          40% { transform: scale(1); opacity: 1; }
+        }
       `}</style>
     </div>
   );
