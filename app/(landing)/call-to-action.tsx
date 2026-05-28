@@ -6,12 +6,12 @@ import { ArrowRight, Sparkles } from "lucide-react"
 
 export default function CallToAction() {
     return (
-        <section className="py-20 md:py-32 px-6" style={{ background: "#f0f2fc" }}>
+        <section className="py-12 md:py-20 px-6" style={{ background: "#f0f2fc" }}>
             <motion.div
-                className="mx-auto max-w-3xl rounded-3xl px-8 py-16 md:py-20 text-center relative overflow-hidden"
+                className="mx-auto max-w-3xl rounded-3xl px-8 py-10 md:py-14 text-center relative overflow-hidden"
                 style={{
-                    background: "linear-gradient(135deg, #1a1d3b 0%, #2a2f6e 60%, #3d3080 100%)",
-                    boxShadow: "0 24px 80px rgba(66,85,255,0.30)",
+                    background: "linear-gradient(135deg, #4255ff 0%, #3544e8 55%, #2b38d4 100%)",
+                    boxShadow: "0 16px 48px rgba(66,85,255,0.28)",
                 }}
                 initial={{ opacity: 0, y: 32 }}
                 whileInView={{ opacity: 1, y: 0 }}

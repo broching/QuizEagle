@@ -493,10 +493,10 @@ function ResultView({ result, onGenerateAnother }: { result: GenerateResult; onG
 
       <Tabs defaultValue="flashcards">
         <TabsList className="mb-5 bg-[#eef0ff] p-1 rounded-xl h-auto w-full">
-          <TabsTrigger value="flashcards" className="flex-1 gap-1.5 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#4255ff] text-[#6A6F87] font-semibold px-3 py-2 text-sm">
+          <TabsTrigger value="flashcards" className="flex-1 gap-1.5 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#1a1d3b] text-[#4255ff]/60 font-semibold px-3 py-2 text-sm">
             <BookOpen size={14} />Flashcards ({result.flashcards.length})
           </TabsTrigger>
-          <TabsTrigger value="quiz" className="flex-1 gap-1.5 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#4255ff] text-[#6A6F87] font-semibold px-3 py-2 text-sm">
+          <TabsTrigger value="quiz" className="flex-1 gap-1.5 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#1a1d3b] text-[#4255ff]/60 font-semibold px-3 py-2 text-sm">
             <Brain size={14} />Quiz ({result.quizQuestions.length} Qs)
           </TabsTrigger>
         </TabsList>
@@ -730,10 +730,10 @@ function GeneratorForm({
     <div className="w-full space-y-4">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4 bg-[#eef0ff] p-1 rounded-xl h-auto w-full">
-          <TabsTrigger value="document" className="flex-1 gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#4255ff] text-[#6A6F87] font-semibold px-3 py-2.5">
+          <TabsTrigger value="document" className="flex-1 gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#1a1d3b] text-[#4255ff]/60 font-semibold px-3 py-2.5">
             <FileText size={15} />Document
           </TabsTrigger>
-          <TabsTrigger value="media" className="flex-1 gap-1.5 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#4255ff] text-[#6A6F87] font-semibold px-3 py-2.5">
+          <TabsTrigger value="media" className="flex-1 gap-1.5 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#1a1d3b] text-[#4255ff]/60 font-semibold px-3 py-2.5">
             <Youtube size={15} />YouTube & Video{!isSignedIn && <Lock size={11} className="ml-0.5 opacity-60" />}
           </TabsTrigger>
         </TabsList>

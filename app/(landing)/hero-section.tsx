@@ -8,7 +8,7 @@ export default function HeroSection() {
         <>
             <HeroHeader />
             <section style={{ background: '#f0f2fc' }} className="min-h-screen">
-                <div className="mx-auto max-w-xl px-4 sm:px-6 pt-24 pb-20">
+                <div className="mx-auto max-w-xl px-4 sm:px-6 pt-28 pb-20">
 
                     {/* Compact badge */}
                     <div className="flex justify-center mb-5">
