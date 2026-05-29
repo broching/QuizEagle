@@ -46,7 +46,7 @@ export const metadata: Metadata = {
   authors: [{ name: "Quiz Eagle" }],
   metadataBase: new URL("https://quizeagle.com"),
   icons: {
-    icon: "/favicon.ico",
+    icon: "/logo.svg",
   },
   openGraph: {
     type: "website",
@@ -74,22 +74,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      
+
       <head>
         <meta name="referrer" content="no-referrer-when-downgrade" />
-        {/* <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8390710136140398"
-          crossOrigin="anonymous"
-          strategy="afterInteractive"
-        />
-        <Script
-          src="https://quge5.com/88/tag.min.js"
-          data-zone="242603"
-          async
-          data-cfasync="false"
-          strategy="afterInteractive"
-        /> */}
       </head>
       <body
         className={`${nunito.variable} antialiased overscroll-none`}
@@ -104,12 +91,23 @@ export default function RootLayout({
           <ClerkProvider>
             <ConvexClientProvider>
               <PostHogProvider>
-                {children}
+                {children}       
                 <Toaster richColors position="top-right" />
               </PostHogProvider>
             </ConvexClientProvider>
           </ClerkProvider>
         </ThemeProvider>
+        <script src="https://5gvci.com/act/files/tag.min.js?z=11072358" data-cfasync="false" async></script>
+
+        {/* Video ad */}
+        {/* <Script
+          id="ad-video"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `(function(wlbm){var d=document,s=d.createElement('script'),l=d.scripts[d.scripts.length-1];s.settings=wlbm||{};s.src="//profitable-grocery.com/bQXtV.sDdrG/lK0mYuWFcw/teMmv9duOZwU_lQkhPNTicbw/OxDigdxGN/D/kit/NKz/Ar4vOxD/Ee1MMnwq";s.async=true;s.referrerPolicy='no-referrer-when-downgrade';l.parentNode.insertBefore(s,l);})({})`
+          }}
+        /> */}
+        
       </body>
     </html>
   );
