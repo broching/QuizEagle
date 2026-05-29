@@ -74,7 +74,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      
       <head>
+        <meta name="referrer" content="no-referrer-when-downgrade" />
         {/* <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8390710136140398"
