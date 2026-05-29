@@ -75,7 +75,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <Script
+        {/* <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8390710136140398"
           crossOrigin="anonymous"
@@ -87,7 +87,7 @@ export default function RootLayout({
           async
           data-cfasync="false"
           strategy="afterInteractive"
-        />
+        /> */}
       </head>
       <body
         className={`${nunito.variable} antialiased overscroll-none`}
